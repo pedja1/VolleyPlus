@@ -16,6 +16,25 @@
 
 package com.android.volley.toolbox;
 
+import android.text.TextUtils;
+
+import com.android.volley.Request;
+import com.android.volley.Request.Method;
+import com.android.volley.Response.ProgressListener;
+import com.android.volley.error.AuthFailureError;
+import com.android.volley.request.MultiPartRequest;
+import com.android.volley.request.MultiPartRequest.MultiPartParam;
+
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.message.BasicStatusLine;
+
 import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -36,25 +55,6 @@ import java.util.Map.Entry;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicHttpResponse;
-import org.apache.http.message.BasicStatusLine;
-
-import android.text.TextUtils;
-
-import com.android.volley.Request;
-import com.android.volley.Request.Method;
-import com.android.volley.Response.ProgressListener;
-import com.android.volley.error.AuthFailureError;
-import com.android.volley.request.MultiPartRequest;
-import com.android.volley.request.MultiPartRequest.MultiPartParam;
-
 /**
  * An {@link HttpStack} based on {@link HttpURLConnection}.
  */
@@ -70,7 +70,7 @@ public class HurlStack implements HttpStack {
 	private static final String FORM_DATA = "form-data; name=\"%s\"";
 	private static final String BOUNDARY_PREFIX = "--";
 	private static final String CONTENT_TYPE_OCTET_STREAM = "application/octet-stream";
-	private static final String FILENAME = "filename=%s";
+	private static final String FILENAME = "filename=\"%s\"";
 	private static final String COLON_SPACE = ": ";
 	private static final String SEMICOLON_SPACE = "; ";
 
@@ -184,10 +184,7 @@ public class HurlStack implements HttpStack {
 	 * @param connection
 	 *            The Connection to perform the multi part request
 	 * @param request
-	 * @param additionalHeaders
-	 * @param multipartParams
 	 *            The params to add to the Multi Part request
-	 * @param filesToUpload
 	 *            The files to upload
 	 * @throws ProtocolException
 	 */
@@ -201,6 +198,9 @@ public class HurlStack implements HttpStack {
 		connection.setDoOutput(true);
 		connection.setRequestProperty(HEADER_CONTENT_TYPE, String.format(CONTENT_TYPE_MULTIPART, charset, curTime));
 		connection.setChunkedStreamingMode(0);
+
+        ProgressListener progressListener;
+        progressListener = (ProgressListener) request;
 
 		Map<String, MultiPartParam> multipartParams = ((MultiPartRequest<?>) request).getMultipartParams();
 		Map<String, String> filesToUpload = ((MultiPartRequest<?>) request).getFilesToUpload();
@@ -234,15 +234,20 @@ public class HurlStack implements HttpStack {
 						.append(String.format(HEADER_CONTENT_DISPOSITION + COLON_SPACE + FORM_DATA + SEMICOLON_SPACE + FILENAME, key, file.getName()))
 						.append(CRLF).append(HEADER_CONTENT_TYPE + COLON_SPACE + CONTENT_TYPE_OCTET_STREAM).append(CRLF)
 						.append(HEADER_CONTENT_TRANSFER_ENCODING + COLON_SPACE + BINARY).append(CRLF).append(CRLF).flush();
+
 				BufferedInputStream input = null;
 				try {
 					FileInputStream fis = new FileInputStream(file);
+                    int transferredBytes = 0;
+                    int totalSize = (int) file.length();
 					input = new BufferedInputStream(fis);
 					int bufferLength = 0;
 
 					byte[] buffer = new byte[1024];
 					while ((bufferLength = input.read(buffer)) > 0) {
 						out.write(buffer, 0, bufferLength);
+                        transferredBytes += bufferLength;
+                        progressListener.onProgress(transferredBytes, totalSize);
 					}
 					out.flush(); // Important! Output cannot be closed. Close of
 									// writer will close
