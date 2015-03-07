@@ -16,6 +16,8 @@
 
 package com.android.volley.toolbox;
 
+import static com.android.volley.misc.MultipartUtils.*;
+
 import android.text.TextUtils;
 
 import com.android.volley.Request;
@@ -59,20 +61,6 @@ import javax.net.ssl.SSLSocketFactory;
  * An {@link HttpStack} based on {@link HttpURLConnection}.
  */
 public class HurlStack implements HttpStack {
-
-	private static final String HEADER_CONTENT_TYPE = "Content-Type";
-	private static final String HEADER_USER_AGENT = "User-Agent";
-	private static final String HEADER_CONTENT_DISPOSITION = "Content-Disposition";
-	private static final String HEADER_CONTENT_TRANSFER_ENCODING = "Content-Transfer-Encoding";
-	private static final String CONTENT_TYPE_MULTIPART = "multipart/form-data; charset=%s; boundary=%s";
-	private static final String BINARY = "binary";
-	private static final String CRLF = "\r\n";
-	private static final String FORM_DATA = "form-data; name=\"%s\"";
-	private static final String BOUNDARY_PREFIX = "--";
-	private static final String CONTENT_TYPE_OCTET_STREAM = "application/octet-stream";
-	private static final String FILENAME = "filename=\"%s\"";
-	private static final String COLON_SPACE = ": ";
-	private static final String SEMICOLON_SPACE = "; ";
 
 	private UrlRewriter mUrlRewriter;
 	private final SSLSocketFactory mSslSocketFactory;
@@ -197,13 +185,22 @@ public class HurlStack implements HttpStack {
 		connection.setRequestMethod("POST");
 		connection.setDoOutput(true);
 		connection.setRequestProperty(HEADER_CONTENT_TYPE, String.format(CONTENT_TYPE_MULTIPART, charset, curTime));
-		connection.setChunkedStreamingMode(0);
+		
+		Map<String, MultiPartParam> multipartParams = ((MultiPartRequest<?>) request).getMultipartParams();
+		Map<String, String> filesToUpload = ((MultiPartRequest<?>) request).getFilesToUpload();
+		
+		if (((MultiPartRequest<?>) request).isFixedStreamingMode()) {
+			int contentLength = getContentLengthForMultipartRequest(boundary, multipartParams, filesToUpload);
+			
+			connection.setFixedLengthStreamingMode(contentLength);
+		} else {
+			connection.setChunkedStreamingMode(0);
+		}
+		// Modified end
 
         ProgressListener progressListener;
         progressListener = (ProgressListener) request;
 
-		Map<String, MultiPartParam> multipartParams = ((MultiPartRequest<?>) request).getMultipartParams();
-		Map<String, String> filesToUpload = ((MultiPartRequest<?>) request).getFilesToUpload();
 		PrintWriter writer = null;
 		try {
 			OutputStream out = connection.getOutputStream();

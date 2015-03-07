@@ -1,5 +1,7 @@
 package com.android.volley.toolbox.multipart;
 
+import static com.android.volley.misc.MultipartUtils.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,8 +19,7 @@ import com.android.volley.Response.ProgressListener;
 public final class FilePart extends BasePart {
 
     private final File file;
-    private ProgressListener mProgressListener;
-    
+
     /**
      * @param name String - name of parameter (may not be <code>null</code>).
      * @param file File (may not be <code>null</code>).
@@ -59,45 +60,23 @@ public final class FilePart extends BasePart {
         };
     }
     
-    public void setProgressListener(ProgressListener listner){
-    	mProgressListener = listner;
-    }
-
     public long getContentLength(Boundary boundary) {
-        return getHeader(boundary).length + file.length() + CRLF.length;
+        return getHeader(boundary).length + file.length() + CRLF_BYTES.length;
     }
 
     @Override
     public void writeTo(OutputStream out, Boundary boundary) throws IOException {
         out.write(getHeader(boundary));
-		if (mProgressListener != null) {
-	        InputStream in = new FileInputStream(file);
-	        try {
-				int transferredBytes = 0;
-				int totalSize = (int) file.length();
-	            byte[] tmp = new byte[4096];
-	            int l;
-	            while ((l = in.read(tmp)) != -1) {
-	                out.write(tmp, 0, l);
-	                transferredBytes += l;
-	                mProgressListener.onProgress(transferredBytes, totalSize);
-	            }
-	        } finally {
-	            in.close();
-	        }
-		}
-		else{
-	        InputStream in = new FileInputStream(file);
-	        try {
-	            byte[] tmp = new byte[4096];
-	            int l;
-	            while ((l = in.read(tmp)) != -1) {
-	                out.write(tmp, 0, l);
-	            }
-	        } finally {
-	            in.close();
-	        }
-		}
-        out.write(CRLF);
+        InputStream in = new FileInputStream(file);
+        try {
+            byte[] tmp = new byte[4096];
+            int l;
+            while ((l = in.read(tmp)) != -1) {
+                out.write(tmp, 0, l);
+            }
+        } finally {
+            in.close();
+        }
+        out.write(CRLF_BYTES);
     }
 }
