@@ -15,15 +15,12 @@
  */
 package com.android.volley.cache.plus;
 
-import java.util.LinkedList;
-
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.util.ArrayMap;
@@ -40,6 +37,8 @@ import com.android.volley.misc.Utils;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.ui.AnimateImageView;
 import com.android.volley.ui.RecyclingBitmapDrawable;
+
+import java.util.LinkedList;
 
 /**
  * Helper that handles loading and caching images from remote URLs.
@@ -84,6 +83,8 @@ public class ImageLoader {
     private ContentResolver mContentResolver;
     
     private ArrayMap<String, String> mHeaders;
+
+    private ImageRequest.BitmapProcessor mBitmapProcessor;
     
     /**
      * Constructs a new ImageLoader with a default LruCache
@@ -351,7 +352,7 @@ public class ImageLoader {
     }
 
     protected Request<?> makeImageRequest(String requestUrl, int maxWidth, int maxHeight, final String cacheKey) {
-        return new ImageRequest(requestUrl, mResources, mContentResolver, new Listener<BitmapDrawable>() {
+        return new ImageRequest(requestUrl, mResources, mContentResolver, mBitmapProcessor, new Listener<BitmapDrawable>() {
             @Override
             public void onResponse(BitmapDrawable response) {
                 onGetImageSuccess(cacheKey, response);
@@ -654,5 +655,10 @@ public class ImageLoader {
     
 	public void setHeaders(ArrayMap<String, String> headers) {
         mHeaders = headers;
+    }
+
+    public void git (ImageRequest.BitmapProcessor postProcessor)
+    {
+        this.mBitmapProcessor = postProcessor;
     }
 }
