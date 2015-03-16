@@ -16,9 +16,6 @@
 
 package com.android.volley.cache.plus;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.res.Resources;
@@ -41,6 +38,9 @@ import com.android.volley.misc.ImageUtils;
 import com.android.volley.misc.Utils;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.ui.RecyclingBitmapDrawable;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * A canned request for getting an image at a given URL and calling
@@ -70,6 +70,8 @@ public class ImageRequest extends Request<BitmapDrawable> {
     private static final Object sDecodeLock = new Object();
 
     private final BitmapFactory.Options defaultOptions;
+
+	private BitmapProcessor mBitmapProcessor;
     
     /**
      * Creates a new image request, decoding to a maximum specified width and
@@ -91,7 +93,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
      * @param decodeConfig Format to decode the bitmap to
      * @param errorListener Error listener, or null to ignore errors
      */
-    public ImageRequest(String url, Resources resources, ContentResolver contentResolver,
+    public ImageRequest(String url, Resources resources, ContentResolver contentResolver, BitmapProcessor bitmapProcessor,
     		Response.Listener<BitmapDrawable> listener, int maxWidth, int maxHeight,
             Config decodeConfig, Response.ErrorListener errorListener) {
         super(Method.GET, url, errorListener);
@@ -104,6 +106,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
         mDecodeConfig = decodeConfig;
         mMaxWidth = maxWidth;
         mMaxHeight = maxHeight;
+		mBitmapProcessor = bitmapProcessor;
         
         defaultOptions = getDefaultOptions();
     }
@@ -502,6 +505,8 @@ public class ImageRequest extends Request<BitmapDrawable> {
 			} else {
 				bitmap = tempBitmap;
 			}
+
+			if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
         }
 
         if (bitmap == null) {
@@ -557,7 +562,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 
     @TargetApi(11)
     private static void copyOptionsHoneycomb(BitmapFactory.Options from, BitmapFactory.Options to) {
-        copyOptionsGingerbreadMr1(from, to);
+		copyOptionsGingerbreadMr1(from, to);
         to.inMutable = from.inMutable;
     }
 
@@ -578,4 +583,12 @@ public class ImageRequest extends Request<BitmapDrawable> {
         to.inScreenDensity = from.inScreenDensity;
         to.inTargetDensity = from.inTargetDensity;
     }
+
+	interface BitmapProcessor
+	{
+		/**
+		 * return processed bitmap
+		 * @param bitmap bitmap object to process*/
+		Bitmap processBitmap(Bitmap bitmap);
+	}
 }
