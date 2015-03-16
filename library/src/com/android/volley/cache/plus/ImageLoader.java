@@ -657,7 +657,7 @@ public class ImageLoader {
         mHeaders = headers;
     }
 
-    public void git (ImageRequest.BitmapProcessor postProcessor)
+    public void setBitmapProcessor (ImageRequest.BitmapProcessor postProcessor)
     {
         this.mBitmapProcessor = postProcessor;
     }
