@@ -505,9 +505,8 @@ public class ImageRequest extends Request<BitmapDrawable> {
 			} else {
 				bitmap = tempBitmap;
 			}
-
-			if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
         }
+		if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
 
         if (bitmap == null) {
         	return Response.error(new ParseError(response));
