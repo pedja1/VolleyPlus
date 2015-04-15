@@ -47,116 +47,116 @@ import java.io.FileNotFoundException;
  * back with a decoded Bitmap.
  */
 public class ImageRequest extends Request<BitmapDrawable> {
-    /** Socket timeout in milliseconds for image requests */
-    private static final int IMAGE_TIMEOUT_MS = 1000;
+	/** Socket timeout in milliseconds for image requests */
+	private static final int IMAGE_TIMEOUT_MS = 1000;
 
-    /** Default number of retries for image requests */
-    private static final int IMAGE_MAX_RETRIES = 2;
+	/** Default number of retries for image requests */
+	private static final int IMAGE_MAX_RETRIES = 2;
 
-    /** Default backoff multiplier for image requests */
-    private static final float IMAGE_BACKOFF_MULT = 2f;
-    
-    private static final boolean PREFER_QUALITY_OVER_SPEED = false;
+	/** Default backoff multiplier for image requests */
+	private static final float IMAGE_BACKOFF_MULT = 2f;
 
-    private final Response.Listener<BitmapDrawable> mListener;
-    private final Config mDecodeConfig;
-    private final int mMaxWidth;
-    private final int mMaxHeight;
-    
+	private static final boolean PREFER_QUALITY_OVER_SPEED = false;
+
+	private final Response.Listener<BitmapDrawable> mListener;
+	private final Config mDecodeConfig;
+	private final int mMaxWidth;
+	private final int mMaxHeight;
+
 	private Resources mResources;
 	private ContentResolver mContentResolver;
-	
-    /** Decoding lock so that we don't decode more than one image at a time (to avoid OOM's) */
-    private static final Object sDecodeLock = new Object();
 
-    private final BitmapFactory.Options defaultOptions;
+	/** Decoding lock so that we don't decode more than one image at a time (to avoid OOM's) */
+	private static final Object sDecodeLock = new Object();
+
+	private final BitmapFactory.Options defaultOptions;
 
 	private BitmapProcessor mBitmapProcessor;
-    
-    /**
-     * Creates a new image request, decoding to a maximum specified width and
-     * height. If both width and height are zero, the image will be decoded to
-     * its natural size. If one of the two is nonzero, that dimension will be
-     * clamped and the other one will be set to preserve the image's aspect
-     * ratio. If both width and height are nonzero, the image will be decoded to
-     * be fit in the rectangle of dimensions width x height while keeping its
-     * aspect ratio.
-     *
-     * @param url URL of the image
-     * @param resources {@link Resources} reference for parsing resource URIs. Can be
-     * 			<code>null</code> if you don't need to load resource uris
-     * @param contentResolver 
-     * @param listener Listener to receive the decoded bitmap
-     * @param maxWidth Maximum width to decode this bitmap to, or zero for none
-     * @param maxHeight Maximum height to decode this bitmap to, or zero for
-     *            none
-     * @param decodeConfig Format to decode the bitmap to
-     * @param errorListener Error listener, or null to ignore errors
-     */
-    public ImageRequest(String url, Resources resources, ContentResolver contentResolver, BitmapProcessor bitmapProcessor,
-    		Response.Listener<BitmapDrawable> listener, int maxWidth, int maxHeight,
-            Config decodeConfig, Response.ErrorListener errorListener) {
-        super(Method.GET, url, errorListener);
-        setRetryPolicy(
-                new DefaultRetryPolicy(IMAGE_TIMEOUT_MS, IMAGE_MAX_RETRIES, IMAGE_BACKOFF_MULT));
-        
-        mResources = resources;
-        mContentResolver = contentResolver;
-        mListener = listener;
-        mDecodeConfig = decodeConfig;
-        mMaxWidth = maxWidth;
-        mMaxHeight = maxHeight;
+
+	/**
+	 * Creates a new image request, decoding to a maximum specified width and
+	 * height. If both width and height are zero, the image will be decoded to
+	 * its natural size. If one of the two is nonzero, that dimension will be
+	 * clamped and the other one will be set to preserve the image's aspect
+	 * ratio. If both width and height are nonzero, the image will be decoded to
+	 * be fit in the rectangle of dimensions width x height while keeping its
+	 * aspect ratio.
+	 *
+	 * @param url URL of the image
+	 * @param resources {@link Resources} reference for parsing resource URIs. Can be
+	 * 			<code>null</code> if you don't need to load resource uris
+	 * @param contentResolver
+	 * @param listener Listener to receive the decoded bitmap
+	 * @param maxWidth Maximum width to decode this bitmap to, or zero for none
+	 * @param maxHeight Maximum height to decode this bitmap to, or zero for
+	 *            none
+	 * @param decodeConfig Format to decode the bitmap to
+	 * @param errorListener Error listener, or null to ignore errors
+	 */
+	public ImageRequest(String url, Resources resources, ContentResolver contentResolver, BitmapProcessor bitmapProcessor,
+						Response.Listener<BitmapDrawable> listener, int maxWidth, int maxHeight,
+						Config decodeConfig, Response.ErrorListener errorListener) {
+		super(Method.GET, url, errorListener);
+		setRetryPolicy(
+				new DefaultRetryPolicy(IMAGE_TIMEOUT_MS, IMAGE_MAX_RETRIES, IMAGE_BACKOFF_MULT));
+
+		mResources = resources;
+		mContentResolver = contentResolver;
+		mListener = listener;
+		mDecodeConfig = decodeConfig;
+		mMaxWidth = maxWidth;
+		mMaxHeight = maxHeight;
 		mBitmapProcessor = bitmapProcessor;
-        
-        defaultOptions = getDefaultOptions();
-    }
 
-    @Override
-    public Priority getPriority() {
-        return Priority.LOW;
-    }
+		defaultOptions = getDefaultOptions();
+	}
 
-    /**
-     * Scales one side of a rectangle to fit aspect ratio.
-     *
-     * @param maxPrimary Maximum size of the primary dimension (i.e. width for
-     *        max width), or zero to maintain aspect ratio with secondary
-     *        dimension
-     * @param maxSecondary Maximum size of the secondary dimension, or zero to
-     *        maintain aspect ratio with primary dimension
-     * @param actualPrimary Actual size of the primary dimension
-     * @param actualSecondary Actual size of the secondary dimension
-     */
-    private static int getResizedDimension(int maxPrimary, int maxSecondary, int actualPrimary,
-            int actualSecondary) {
-        // If no dominant value at all, just return the actual.
-        if (maxPrimary == 0 && maxSecondary == 0) {
-            return actualPrimary;
-        }
+	@Override
+	public Priority getPriority() {
+		return Priority.LOW;
+	}
 
-        // If primary is unspecified, scale primary to match secondary's scaling ratio.
-        if (maxPrimary == 0) {
-            double ratio = (double) maxSecondary / (double) actualSecondary;
-            return (int) (actualPrimary * ratio);
-        }
+	/**
+	 * Scales one side of a rectangle to fit aspect ratio.
+	 *
+	 * @param maxPrimary Maximum size of the primary dimension (i.e. width for
+	 *        max width), or zero to maintain aspect ratio with secondary
+	 *        dimension
+	 * @param maxSecondary Maximum size of the secondary dimension, or zero to
+	 *        maintain aspect ratio with primary dimension
+	 * @param actualPrimary Actual size of the primary dimension
+	 * @param actualSecondary Actual size of the secondary dimension
+	 */
+	private static int getResizedDimension(int maxPrimary, int maxSecondary, int actualPrimary,
+										   int actualSecondary) {
+		// If no dominant value at all, just return the actual.
+		if (maxPrimary == 0 && maxSecondary == 0) {
+			return actualPrimary;
+		}
 
-        if (maxSecondary == 0) {
-            return maxPrimary;
-        }
+		// If primary is unspecified, scale primary to match secondary's scaling ratio.
+		if (maxPrimary == 0) {
+			double ratio = (double) maxSecondary / (double) actualSecondary;
+			return (int) (actualPrimary * ratio);
+		}
 
-        double ratio = (double) actualSecondary / (double) actualPrimary;
-        int resized = maxPrimary;
-        if (resized * ratio > maxSecondary) {
-            resized = (int) (maxSecondary / ratio);
-        }
-        return resized;
-    }
+		if (maxSecondary == 0) {
+			return maxPrimary;
+		}
 
-    @Override
-    protected Response<BitmapDrawable> parseNetworkResponse(NetworkResponse response) {
-        // Serialize all decode on a global lock to reduce concurrent heap usage.
-        synchronized (sDecodeLock) {
-            try {
+		double ratio = (double) actualSecondary / (double) actualPrimary;
+		int resized = maxPrimary;
+		if (resized * ratio > maxSecondary) {
+			resized = (int) (maxSecondary / ratio);
+		}
+		return resized;
+	}
+
+	@Override
+	protected Response<BitmapDrawable> parseNetworkResponse(NetworkResponse response) {
+		// Serialize all decode on a global lock to reduce concurrent heap usage.
+		synchronized (sDecodeLock) {
+			try {
 				if (getUrl().startsWith(Utils.SCHEME_VIDEO)) {
 					return doVideoFileParse();
 				} else if (getUrl().startsWith(Utils.SCHEME_FILE)) {
@@ -168,16 +168,16 @@ public class ImageRequest extends Request<BitmapDrawable> {
 				} else {
 					return doParse(response);
 				}
-            } catch (OutOfMemoryError e) {
-                VolleyLog.e("Caught OOM for %d byte image, url=%s", response.data.length, getUrl());
-                return Response.error(new ParseError(e));
-            }
-        }
-    }
+			} catch (OutOfMemoryError e) {
+				VolleyLog.e("Caught OOM for %d byte image, url=%s", response.data.length, getUrl());
+				return Response.error(new ParseError(e));
+			}
+		}
+	}
 
 	/**
 	 * The real guts of parseNetworkResponse. Broken out for readability.
-	 * 
+	 *
 	 * This version is for reading a Bitmap from Video
 	 */
 	private Response<BitmapDrawable> doVideoFileParse() {
@@ -236,26 +236,26 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
-	        BitmapDrawable drawable;
+			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
-	            // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-	            drawable = new BitmapDrawable(mResources, bitmap);
-	        } else {
-	            // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
-	            // which will recycle automagically
-	            drawable = new RecyclingBitmapDrawable(mResources, bitmap);
-	        }
+				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+				drawable = new BitmapDrawable(mResources, bitmap);
+			} else {
+				// Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+				// which will recycle automagically
+				drawable = new RecyclingBitmapDrawable(mResources, bitmap);
+			}
 			return Response.success(drawable, HttpHeaderParser.parseBitmapCacheHeaders(bitmap));
 		}
 	}
-	
+
 	private Bitmap getVideoFrame(String path) {
 		return ThumbnailUtils.createVideoThumbnail(path, Images.Thumbnails.MINI_KIND);
 	}
-	
+
 	/**
 	 * The real guts of parseNetworkResponse. Broken out for readability.
-	 * 
+	 *
 	 * This version is for reading a Bitmap from file
 	 */
 	private Response<BitmapDrawable> doFileParse() {
@@ -277,7 +277,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		Bitmap bitmap = null;
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 
-			bitmap = BitmapFactory.decodeFile(bitmapFile.getAbsolutePath(), decodeOptions);
+			bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
 			addMarker("read-full-size-image-from-file");
 		} else {
 			// If we have to resize this image, first get the natural bounds.
@@ -295,7 +295,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 			// Decode to the nearest power of two scaling factor.
 			decodeOptions.inJustDecodeBounds = false;
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = BitmapFactory.decodeFile(bitmapFile.getAbsolutePath(), decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
 			addMarker(String.format("read-from-file-scaled-times-%d",
 					decodeOptions.inSampleSize));
 			// If necessary, scale down to the maximal acceptable size.
@@ -314,22 +314,22 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
-	        BitmapDrawable drawable;
+			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
-	            // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-	            drawable = new BitmapDrawable(mResources, bitmap);
-	        } else {
-	            // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
-	            // which will recycle automagically
-	            drawable = new RecyclingBitmapDrawable(mResources, bitmap);
-	        }
+				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+				drawable = new BitmapDrawable(mResources, bitmap);
+			} else {
+				// Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+				// which will recycle automagically
+				drawable = new RecyclingBitmapDrawable(mResources, bitmap);
+			}
 			return Response.success(drawable, HttpHeaderParser.parseBitmapCacheHeaders(bitmap));
 		}
 	}
-	
+
 	/**
 	 * The real guts of parseNetworkResponse. Broken out for readability.
-	 * 
+	 *
 	 * This version is for reading a Bitmap from resource
 	 */
 	private Response<BitmapDrawable> doContentParse() {
@@ -341,13 +341,13 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		// Remove the 'content://' prefix
 		//final String imageData = requestUrl.substring(10, requestUrl.length());
 		final Uri imageUri = Uri.parse(requestUrl);
-		
+
 		BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
 		Bitmap bitmap = null;
-		
+
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 			bitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions);
 			addMarker("read-full-size-image-from-resource");
@@ -381,22 +381,22 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
-	        BitmapDrawable drawable;
+			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
-	            // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-	            drawable = new BitmapDrawable(mResources, bitmap);
-	        } else {
-	            // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
-	            // which will recycle automagically
-	            drawable = new RecyclingBitmapDrawable(mResources, bitmap);
-	        }
+				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+				drawable = new BitmapDrawable(mResources, bitmap);
+			} else {
+				// Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+				// which will recycle automagically
+				drawable = new RecyclingBitmapDrawable(mResources, bitmap);
+			}
 			return Response.success(drawable, HttpHeaderParser.parseBitmapCacheHeaders(bitmap));
 		}
 	}
 
 	/**
 	 * The real guts of parseNetworkResponse. Broken out for readability.
-	 * 
+	 *
 	 * This version is for reading a Bitmap from resource
 	 */
 	private Response<BitmapDrawable> doResourceParse() {
@@ -449,36 +449,36 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
-	        BitmapDrawable drawable;
+			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
-	            // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-	            drawable = new BitmapDrawable(mResources, bitmap);
-	        } else {
-	            // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
-	            // which will recycle automagically
-	            drawable = new RecyclingBitmapDrawable(mResources, bitmap);
-	        }
+				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+				drawable = new BitmapDrawable(mResources, bitmap);
+			} else {
+				// Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+				// which will recycle automagically
+				drawable = new RecyclingBitmapDrawable(mResources, bitmap);
+			}
 			return Response.success(drawable, HttpHeaderParser.parseBitmapCacheHeaders(bitmap));
 		}
 	}
-	
-    /**
-     * The real guts of parseNetworkResponse. Broken out for readability.
-     */
-    @TargetApi(Build.VERSION_CODES.GINGERBREAD_MR1) 
-    private Response<BitmapDrawable> doParse(NetworkResponse response) {
-        byte[] data = response.data;
-        BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
+
+	/**
+	 * The real guts of parseNetworkResponse. Broken out for readability.
+	 */
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD_MR1)
+	private Response<BitmapDrawable> doParse(NetworkResponse response) {
+		byte[] data = response.data;
+		BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
-        Bitmap bitmap = null;
-        if (mMaxWidth == 0 && mMaxHeight == 0) {
-            bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
-        } else {
+		Bitmap bitmap = null;
+		if (mMaxWidth == 0 && mMaxHeight == 0) {
+			bitmap = ImageUtils.decodeByteArray(data, decodeOptions);
+		} else {
 			// If we have to resize this image, first get the natural bounds.
 			decodeOptions.inJustDecodeBounds = true;
-			BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+			ImageUtils.decodeByteArray(data, decodeOptions);
 			int actualWidth = decodeOptions.outWidth;
 			int actualHeight = decodeOptions.outHeight;
 
@@ -496,7 +496,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 			}
 
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeByteArray(data, decodeOptions);
 
 			// If necessary, scale down to the maximal acceptable size.
 			if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)) {
@@ -505,83 +505,83 @@ public class ImageRequest extends Request<BitmapDrawable> {
 			} else {
 				bitmap = tempBitmap;
 			}
-        }
+		}
 		if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
 
-        if (bitmap == null) {
-        	return Response.error(new ParseError(response));
-        } else {
-	        BitmapDrawable drawable;
+		if (bitmap == null) {
+			return Response.error(new ParseError(response));
+		} else {
+			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
-	            // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-	            drawable = new BitmapDrawable(mResources, bitmap);
-	        } else {
-	            // Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
-	            // which will recycle automagically
-	            drawable = new RecyclingBitmapDrawable(mResources, bitmap);
-	        }
-            return Response.success(drawable, HttpHeaderParser.parseCacheHeaders(response));
-        }
-    }
+				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
+				drawable = new BitmapDrawable(mResources, bitmap);
+			} else {
+				// Running on Gingerbread or older, so wrap in a RecyclingBitmapDrawable
+				// which will recycle automagically
+				drawable = new RecyclingBitmapDrawable(mResources, bitmap);
+			}
+			return Response.success(drawable, HttpHeaderParser.parseCacheHeaders(response));
+		}
+	}
 
-    @Override
-    protected void deliverResponse(BitmapDrawable response) {
-        mListener.onResponse(response);
-    }
-    
-    @TargetApi(11)
-    public static BitmapFactory.Options getDefaultOptions() {
-       BitmapFactory.Options decodeBitmapOptions = new BitmapFactory.Options();
-       decodeBitmapOptions.inDither = false;
-       decodeBitmapOptions.inScaled = false;
-       decodeBitmapOptions.inPreferredConfig = Bitmap.Config.RGB_565;
-       decodeBitmapOptions.inSampleSize = 1;
-       if (Utils.hasHoneycomb())  {
-           decodeBitmapOptions.inMutable = true;
-       }
-       return decodeBitmapOptions;
-    }
-    
-    @SuppressWarnings("unused")
+	@Override
+	protected void deliverResponse(BitmapDrawable response) {
+		mListener.onResponse(response);
+	}
+
+	@TargetApi(11)
+	public static BitmapFactory.Options getDefaultOptions() {
+		BitmapFactory.Options decodeBitmapOptions = new BitmapFactory.Options();
+		decodeBitmapOptions.inDither = false;
+		decodeBitmapOptions.inScaled = false;
+		decodeBitmapOptions.inPreferredConfig = Bitmap.Config.RGB_565;
+		decodeBitmapOptions.inSampleSize = 1;
+		if (Utils.hasHoneycomb())  {
+			decodeBitmapOptions.inMutable = true;
+		}
+		return decodeBitmapOptions;
+	}
+
+	@SuppressWarnings("unused")
 	private BitmapFactory.Options getOptions() {
-        BitmapFactory.Options result = new BitmapFactory.Options();
-        copyOptions(defaultOptions, result);
-        return result;
-    }
+		BitmapFactory.Options result = new BitmapFactory.Options();
+		copyOptions(defaultOptions, result);
+		return result;
+	}
 
-    private static void copyOptions(BitmapFactory.Options from, BitmapFactory.Options to) {
-        if (Build.VERSION.SDK_INT >= 11) {
-            copyOptionsHoneycomb(from, to);
-        } else if (Build.VERSION.SDK_INT >= 10) {
-            copyOptionsGingerbreadMr1(from, to);
-        } else {
-            copyOptionsFroyo(from, to);
-        }
-    }
+	private static void copyOptions(BitmapFactory.Options from, BitmapFactory.Options to) {
+		if (Build.VERSION.SDK_INT >= 11) {
+			copyOptionsHoneycomb(from, to);
+		} else if (Build.VERSION.SDK_INT >= 10) {
+			copyOptionsGingerbreadMr1(from, to);
+		} else {
+			copyOptionsFroyo(from, to);
+		}
+	}
 
-    @TargetApi(11)
-    private static void copyOptionsHoneycomb(BitmapFactory.Options from, BitmapFactory.Options to) {
+	@TargetApi(11)
+	private static void copyOptionsHoneycomb(BitmapFactory.Options from, BitmapFactory.Options to) {
 		copyOptionsGingerbreadMr1(from, to);
-        to.inMutable = from.inMutable;
-    }
+		to.inMutable = from.inMutable;
+	}
 
-    @TargetApi(10)
-    private static void copyOptionsGingerbreadMr1(BitmapFactory.Options from, BitmapFactory.Options to) {
-        copyOptionsFroyo(from, to);
-        to.inPreferQualityOverSpeed = from.inPreferQualityOverSpeed;
-    }
+	@TargetApi(10)
+	private static void copyOptionsGingerbreadMr1(BitmapFactory.Options from, BitmapFactory.Options to) {
+		copyOptionsFroyo(from, to);
+		to.inPreferQualityOverSpeed = from.inPreferQualityOverSpeed;
+	}
 
-    private static void copyOptionsFroyo(BitmapFactory.Options from, BitmapFactory.Options to) {
-        to.inDensity = from.inDensity;
-        to.inDither = from.inDither;
-        to.inInputShareable = from.inInputShareable;
-        to.inPreferredConfig = from.inPreferredConfig;
-        to.inPurgeable = from.inPurgeable;
-        to.inSampleSize = from.inSampleSize;
-        to.inScaled = from.inScaled;
-        to.inScreenDensity = from.inScreenDensity;
-        to.inTargetDensity = from.inTargetDensity;
-    }
+	private static void copyOptionsFroyo(BitmapFactory.Options from, BitmapFactory.Options to) {
+		to.inDensity = from.inDensity;
+		to.inDither = from.inDither;
+		to.inInputShareable = from.inInputShareable;
+		to.inPreferredConfig = from.inPreferredConfig;
+		to.inPurgeable = from.inPurgeable;
+		to.inSampleSize = from.inSampleSize;
+		to.inScaled = from.inScaled;
+		to.inScreenDensity = from.inScreenDensity;
+		to.inTargetDensity = from.inTargetDensity;
+	}
 
 	public interface BitmapProcessor
 	{

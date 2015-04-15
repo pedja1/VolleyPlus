@@ -16,9 +16,6 @@
 
 package com.android.volley.request;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.res.Resources;
@@ -39,6 +36,9 @@ import com.android.volley.error.ParseError;
 import com.android.volley.misc.ImageUtils;
 import com.android.volley.misc.Utils;
 import com.android.volley.toolbox.HttpHeaderParser;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * A canned request for getting an image at a given URL and calling
@@ -263,7 +263,7 @@ public class ImageRequest extends Request<Bitmap> {
 		Bitmap bitmap = null;
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 
-			bitmap = BitmapFactory.decodeFile(bitmapFile.getAbsolutePath(), decodeOptions);
+			bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
 			addMarker("read-full-size-image-from-file");
 		} else {
 			// If we have to resize this image, first get the natural bounds.
@@ -281,7 +281,7 @@ public class ImageRequest extends Request<Bitmap> {
 			// Decode to the nearest power of two scaling factor.
 			decodeOptions.inJustDecodeBounds = false;
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = BitmapFactory.decodeFile(bitmapFile.getAbsolutePath(), decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
 			addMarker(String.format("read-from-file-scaled-times-%d",
 					decodeOptions.inSampleSize));
 			// If necessary, scale down to the maximal acceptable size.
@@ -433,7 +433,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inPreferredConfig = mDecodeConfig;
         Bitmap bitmap = null;
         if (mMaxWidth == 0 && mMaxHeight == 0) {
-            bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+            bitmap = ImageUtils.decodeByteArray(data, decodeOptions);
         } else {
 			// If we have to resize this image, first get the natural bounds.
 			decodeOptions.inJustDecodeBounds = true;
@@ -455,7 +455,7 @@ public class ImageRequest extends Request<Bitmap> {
 			}
 
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeByteArray(data, decodeOptions);
 
 			// If necessary, scale down to the maximal acceptable size.
 			if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)) {
