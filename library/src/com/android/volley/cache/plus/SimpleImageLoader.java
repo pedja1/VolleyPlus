@@ -333,7 +333,7 @@ public class SimpleImageLoader extends ImageLoader {
             final ImageView imageView, final Drawable placeHolder, final boolean fadeInImage) {
         return new ImageListener() {
             @Override
-            public void onResponse(ImageContainer response, boolean isImmediate) {
+            public void onResponse(ImageContainer response, boolean isImmediate, boolean isFinal) {
                 imageView.setTag(null);
                 if (response.getBitmap() != null) {
                 	

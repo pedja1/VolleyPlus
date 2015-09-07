@@ -146,7 +146,7 @@ public class ImageLoader {
             }
 
             @Override
-            public void onResponse(ImageContainer response, boolean isImmediate) {
+            public void onResponse(ImageContainer response, boolean isImmediate, boolean isFinal) {
                 if (response.getBitmap() != null) {
                     view.setImageDrawable(response.getBitmap());
                 } else if (defaultImageResId != 0) {
@@ -180,7 +180,7 @@ public class ImageLoader {
          * image loading in order to, for example, run an animation to fade in network loaded
          * images.
          */
-        public void onResponse(ImageContainer response, boolean isImmediate);
+        void onResponse(ImageContainer response, boolean isImmediate, boolean isFinished);
     }
 
     /**
@@ -235,7 +235,7 @@ public class ImageLoader {
         if (cachedBitmap != null) {
             // Return the cached bitmap.
             ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
-            imageListener.onResponse(container, true);
+            imageListener.onResponse(container, true, true);
             return container;
         }
 
@@ -244,7 +244,7 @@ public class ImageLoader {
                 new ImageContainer(null, requestUrl, cacheKey, imageListener);
 
         // Update the caller to let them know that they should use the default bitmap.
-        imageListener.onResponse(imageContainer, true);
+        imageListener.onResponse(imageContainer, true, false);
 
         // Check to see if a request is already in-flight.
         BatchedImageRequest request = mInFlightRequests.get(cacheKey);
@@ -299,7 +299,7 @@ public class ImageLoader {
                 new ImageContainer(drawable, requestUrl, cacheKey, imageListener);
 
         // Update the caller to let them know that they should use the default bitmap.
-        imageListener.onResponse(imageContainer, true);
+        imageListener.onResponse(imageContainer, true, true);
         //setImageSuccess(cacheKey, bitmap);
         
         // cache the image that was fetched.
@@ -562,7 +562,7 @@ public class ImageLoader {
                             }
                             if (bir.getError() == null) {
                                 container.mBitmap = bir.mResponseBitmap;
-                                container.mListener.onResponse(container, false);
+                                container.mListener.onResponse(container, false, true);
                             } else {
                                 container.mListener.onErrorResponse(bir.getError());
                             }

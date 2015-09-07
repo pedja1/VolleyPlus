@@ -207,7 +207,7 @@ public class NetworkImageViewPlus extends RecyclingImageView {
                     }
 
                     @Override
-                    public void onResponse(final ImageContainer response, boolean isImmediate) {
+                    public void onResponse(final ImageContainer response, boolean isImmediate, final boolean isFinal) {
                         // If this was an immediate response that was delivered inside of a layout
                         // pass do not set the image immediately as it will trigger a requestLayout
                         // inside of a layout. Instead, defer setting the image by posting back to
@@ -216,7 +216,7 @@ public class NetworkImageViewPlus extends RecyclingImageView {
                             post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    onResponse(response, false);
+                                    onResponse(response, false, isFinal);
                                 }
                             });
                             return;
