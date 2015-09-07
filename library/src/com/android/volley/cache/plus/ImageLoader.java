@@ -589,9 +589,12 @@ public class ImageLoader {
      * @param maxWidth The max-width of the output.
      * @param maxHeight The max-height of the output.
      */
-    protected static String getCacheKey(String url, int maxWidth, int maxHeight) {
-        return new StringBuilder(url.length() + 12).append("#W").append(maxWidth)
-                .append("#H").append(maxHeight).append(url).toString();
+    protected String getCacheKey(String url, int maxWidth, int maxHeight) {
+        StringBuilder builder = new StringBuilder(url.length() + 12);
+        builder.append("#W").append(maxWidth).append("#H").append(maxHeight).append(url);
+        if(mBitmapProcessor != null && mBitmapProcessor.getId() != null)
+            builder.append(":f_").append(mBitmapProcessor.getId());
+        return builder.toString();
     }
     
     /**
