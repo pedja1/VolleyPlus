@@ -155,7 +155,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public Request(int method, String url, Priority priority, Response.ErrorListener listener, RetryPolicy retryPolicy) {
         mMethod = method;
-        mUrl = url;
+        mUrl = url != null && url.startsWith("/") ? "file://" + url : url;
         mPriority = priority;
         mErrorListener = listener;
         setRetryPolicy((retryPolicy == null) ? new DefaultRetryPolicy() : retryPolicy);
