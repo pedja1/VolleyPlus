@@ -216,7 +216,13 @@ public class SimpleImageLoader extends ImageLoader {
         return mMaxImageHeight;
     }
     
-    //Get 
+    //Get
+    @Override
+    public ImageContainer get(String requestUrl, final ImageListener listener)
+    {
+        return get(requestUrl, listener, mMaxImageWidth, mMaxImageHeight);
+    }
+
     public ImageContainer get(String requestUrl, ImageView imageView) {
         return get(requestUrl, imageView, 0);
     }
