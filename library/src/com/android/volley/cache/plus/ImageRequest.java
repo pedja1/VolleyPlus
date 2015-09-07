@@ -236,6 +236,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
+			if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
 			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
 				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
@@ -314,6 +315,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
+			if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
 			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
 				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
@@ -381,6 +383,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
+			if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
 			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
 				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
@@ -449,6 +452,7 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		if (bitmap == null) {
 			return Response.error(new ParseError());
 		} else {
+			if(mBitmapProcessor != null)bitmap = mBitmapProcessor.processBitmap(bitmap);
 			BitmapDrawable drawable;
 			if (Utils.hasHoneycomb()) {
 				// Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
@@ -588,6 +592,10 @@ public class ImageRequest extends Request<BitmapDrawable> {
 		/**
 		 * return processed bitmap
 		 * @param bitmap bitmap object to process*/
-		public Bitmap processBitmap(Bitmap bitmap);
+		Bitmap processBitmap(Bitmap bitmap);
+
+		/**
+		 * @return unique id for this bitmap processor, or null to ignore id*/
+		String getId();
 	}
 }
