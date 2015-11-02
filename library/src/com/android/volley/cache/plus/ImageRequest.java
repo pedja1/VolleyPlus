@@ -138,7 +138,7 @@ public class ImageRequest extends Request<BitmapDrawable>
      * @param actualPrimary   Actual size of the primary dimension
      * @param actualSecondary Actual size of the secondary dimension
      */
-    private static int getResizedDimension(int maxPrimary, int maxSecondary, int actualPrimary,
+    private static float getResizedDimension(int maxPrimary, int maxSecondary, int actualPrimary,
                                            int actualSecondary)
     {
         // If no dominant value at all, just return the actual.
@@ -150,8 +150,8 @@ public class ImageRequest extends Request<BitmapDrawable>
         // If primary is unspecified, scale primary to match secondary's scaling ratio.
         if (maxPrimary == 0)
         {
-            double ratio = (double) maxSecondary / (double) actualSecondary;
-            return (int) (actualPrimary * ratio);
+            float ratio = (float) maxSecondary / (float) actualSecondary;
+            return (actualPrimary * ratio);
         }
 
         if (maxSecondary == 0)
@@ -159,11 +159,11 @@ public class ImageRequest extends Request<BitmapDrawable>
             return maxPrimary;
         }
 
-        double ratio = (double) actualSecondary / (double) actualPrimary;
-        int resized = maxPrimary;
+        float ratio = (float) actualSecondary / (float) actualPrimary;
+        float resized = maxPrimary;
         if (resized * ratio > maxSecondary)
         {
-            resized = (int) (maxSecondary / ratio);
+            resized = (maxSecondary / ratio);
         }
         return resized;
     }
@@ -244,9 +244,9 @@ public class ImageRequest extends Request<BitmapDrawable>
             int actualHeight = decodeOptions.outHeight;
 
             // Then compute the dimensions we would ideally like to decode to.
-            int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
+            float desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
                     actualWidth, actualHeight);
-            int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth,
+            float desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth,
                     actualHeight, actualWidth);
 
             // Decode to the nearest power of two scaling factor.
@@ -259,12 +259,12 @@ public class ImageRequest extends Request<BitmapDrawable>
             if (tempBitmap != null)
             {
                 float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
+                float tempRatio = (float)actualWidth / (float)actualHeight;
 
                 if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
-                    int tmpWidth = desiredWidth;
+                    float tmpWidth = desiredWidth;
                     //noinspection SuspiciousNameCombination
                     desiredWidth = desiredHeight;
                     //noinspection SuspiciousNameCombination
@@ -272,8 +272,8 @@ public class ImageRequest extends Request<BitmapDrawable>
                 }
                 if (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)
                 {
-                    bitmap = Bitmap.createScaledBitmap(tempBitmap, desiredWidth,
-                            desiredHeight, true);
+                    bitmap = Bitmap.createScaledBitmap(tempBitmap, (int)desiredWidth,
+                            (int)desiredHeight, true);
                     tempBitmap.recycle();
                     addMarker("scaling-read-from-file-bitmap");
                 }
@@ -351,9 +351,9 @@ public class ImageRequest extends Request<BitmapDrawable>
             int actualHeight = decodeOptions.outHeight;
 
             // Then compute the dimensions we would ideally like to decode to.
-            int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
-                    actualWidth, actualHeight);
-            int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth,
+            float desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight,
+                 actualWidth, actualHeight);
+            float desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth,
                     actualHeight, actualWidth);
 
             // Decode to the nearest power of two scaling factor.
@@ -365,13 +365,13 @@ public class ImageRequest extends Request<BitmapDrawable>
             // If necessary, scale down to the maximal acceptable size.
             if (tempBitmap != null)
             {
-                float desiredRatio = (float) (desiredWidth / desiredHeight);
-                float tempRatio = (float) (tempBitmap.getWidth() / tempBitmap.getHeight());
+                float desiredRatio = desiredWidth / desiredHeight;
+                float tempRatio = (float)actualWidth / (float)actualHeight;
 
                 if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
-                    int tmpWidth = desiredWidth;
+                    float tmpWidth = desiredWidth;
                     //noinspection SuspiciousNameCombination
                     desiredWidth = desiredHeight;
                     //noinspection SuspiciousNameCombination
@@ -380,7 +380,7 @@ public class ImageRequest extends Request<BitmapDrawable>
 
                 if (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)
                 {
-                    bitmap = Bitmap.createScaledBitmap(tempBitmap, desiredWidth, desiredHeight, true);
+                    bitmap = Bitmap.createScaledBitmap(tempBitmap, (int)desiredWidth, (int)desiredHeight, true);
                     tempBitmap.recycle();
                     addMarker("scaling-read-from-file-bitmap");
                 }
@@ -451,8 +451,8 @@ public class ImageRequest extends Request<BitmapDrawable>
             int actualHeight = decodeOptions.outHeight;
 
             // Then compute the dimensions we would ideally like to decode to.
-            int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight, actualWidth, actualHeight);
-            int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth, actualHeight, actualWidth);
+            float desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight, actualWidth, actualHeight);
+            float desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth, actualHeight, actualWidth);
 
             // Decode to the nearest power of two scaling factor.
             decodeOptions.inJustDecodeBounds = false;
@@ -464,12 +464,12 @@ public class ImageRequest extends Request<BitmapDrawable>
             if (tempBitmap != null)
             {
                 float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
+                float tempRatio = (float)actualWidth / (float)actualHeight;
 
                 if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
-                    int tmpWidth = desiredWidth;
+                    float tmpWidth = desiredWidth;
                     //noinspection SuspiciousNameCombination
                     desiredWidth = desiredHeight;
                     //noinspection SuspiciousNameCombination
@@ -478,7 +478,7 @@ public class ImageRequest extends Request<BitmapDrawable>
 
                 if (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)
                 {
-                    bitmap = Bitmap.createScaledBitmap(tempBitmap, desiredWidth, desiredHeight, true);
+                    bitmap = Bitmap.createScaledBitmap(tempBitmap, (int)desiredWidth, (int)desiredHeight, true);
                     tempBitmap.recycle();
                     addMarker("scaling-read-from-resource-bitmap");
                 }
@@ -525,8 +525,7 @@ public class ImageRequest extends Request<BitmapDrawable>
             return Response.error(new ParseError());//"Resources instance is null"));
         }
         final String requestUrl = getUrl();
-        final int resourceId = Integer.valueOf(Uri.parse(requestUrl)
-                .getLastPathSegment());
+        final int resourceId = Integer.valueOf(Uri.parse(requestUrl).getLastPathSegment());
 
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
         decodeOptions.inInputShareable = true;
@@ -549,8 +548,8 @@ public class ImageRequest extends Request<BitmapDrawable>
             int actualHeight = decodeOptions.outHeight;
 
             // Then compute the dimensions we would ideally like to decode to.
-            int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight, actualWidth, actualHeight);
-            int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth, actualHeight, actualWidth);
+            float desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight, actualWidth, actualHeight);
+            float desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth, actualHeight, actualWidth);
 
             // Decode to the nearest power of two scaling factor.
             decodeOptions.inJustDecodeBounds = false;
@@ -562,12 +561,12 @@ public class ImageRequest extends Request<BitmapDrawable>
             if (tempBitmap != null)
             {
                 float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
+                float tempRatio = (float)actualWidth / (float)actualHeight;
 
                 if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
-                    int tmpWidth = desiredWidth;
+                    float tmpWidth = desiredWidth;
                     //noinspection SuspiciousNameCombination
                     desiredWidth = desiredHeight;
                     //noinspection SuspiciousNameCombination
@@ -576,7 +575,7 @@ public class ImageRequest extends Request<BitmapDrawable>
 
                 if (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)
                 {
-                    bitmap = Bitmap.createScaledBitmap(tempBitmap, desiredWidth, desiredHeight, true);
+                    bitmap = Bitmap.createScaledBitmap(tempBitmap, (int)desiredWidth, (int)desiredHeight, true);
                     tempBitmap.recycle();
                     addMarker("scaling-read-from-resource-bitmap");
                 }
@@ -636,8 +635,8 @@ public class ImageRequest extends Request<BitmapDrawable>
             int actualHeight = decodeOptions.outHeight;
 
             // Then compute the dimensions we would ideally like to decode to.
-            int desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight, actualWidth, actualHeight);
-            int desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth, actualHeight, actualWidth);
+            float desiredWidth = getResizedDimension(mMaxWidth, mMaxHeight, actualWidth, actualHeight);
+            float desiredHeight = getResizedDimension(mMaxHeight, mMaxWidth, actualHeight, actualWidth);
 
             // Decode to the nearest power of two scaling factor.
             decodeOptions.inJustDecodeBounds = false;
@@ -656,12 +655,12 @@ public class ImageRequest extends Request<BitmapDrawable>
             if (tempBitmap != null)
             {
                 float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
+                float tempRatio = (float)actualWidth / (float)actualHeight;
 
                 if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
-                    int tmpWidth = desiredWidth;
+                    float tmpWidth = desiredWidth;
                     //noinspection SuspiciousNameCombination
                     desiredWidth = desiredHeight;
                     //noinspection SuspiciousNameCombination
@@ -670,7 +669,7 @@ public class ImageRequest extends Request<BitmapDrawable>
 
                 if (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)
                 {
-                    bitmap = Bitmap.createScaledBitmap(tempBitmap, desiredWidth, desiredHeight, true);
+                    bitmap = Bitmap.createScaledBitmap(tempBitmap, (int)desiredWidth, (int)desiredHeight, true);
                     tempBitmap.recycle();
                 }
                 else

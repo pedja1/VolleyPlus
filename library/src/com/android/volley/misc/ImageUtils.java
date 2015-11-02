@@ -49,7 +49,7 @@ public class ImageUtils
      */
     // Visible for testing.
     public static int findBestSampleSize(
-            int actualWidth, int actualHeight, int desiredWidth, int desiredHeight)
+            int actualWidth, int actualHeight, float desiredWidth, float desiredHeight)
     {
         double wr = (double) actualWidth / desiredWidth;
         double hr = (double) actualHeight / desiredHeight;
