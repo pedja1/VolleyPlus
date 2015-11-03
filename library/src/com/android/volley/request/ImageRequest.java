@@ -290,7 +290,7 @@ public class ImageRequest extends Request<Bitmap> {
 		Bitmap bitmap = null;
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 
-			bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
+			bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions).bitmap;
 			addMarker("read-full-size-image-from-file");
 		} else {
 			// If we have to resize this image, first get the natural bounds.
@@ -308,7 +308,7 @@ public class ImageRequest extends Request<Bitmap> {
 			// Decode to the nearest power of two scaling factor.
 			decodeOptions.inJustDecodeBounds = false;
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions).bitmap;
 			addMarker(String.format("read-from-file-scaled-times-%d",
 					decodeOptions.inSampleSize));
 			// If necessary, scale down to the maximal acceptable size.
@@ -353,7 +353,7 @@ public class ImageRequest extends Request<Bitmap> {
 		Bitmap bitmap = null;
 		
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
-			bitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions);
+			bitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions).bitmap;
 			addMarker("read-full-size-image-from-resource");
 		} else {
 			// If we have to resize this image, first get the natural bounds.
@@ -372,7 +372,7 @@ public class ImageRequest extends Request<Bitmap> {
 			decodeOptions.inJustDecodeBounds = false;
 
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions).bitmap;
 			addMarker(String.format("read-from-resource-scaled-times-%d", decodeOptions.inSampleSize));
 			// If necessary, scale down to the maximal acceptable size.
 			if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)) {
@@ -464,7 +464,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inPreferredConfig = mDecodeConfig;
         Bitmap bitmap = null;
         if (mMaxWidth == 0 && mMaxHeight == 0) {
-            bitmap = ImageUtils.decodeByteArray(data, decodeOptions);
+            bitmap = ImageUtils.decodeByteArray(data, decodeOptions).bitmap;
         } else {
 			// If we have to resize this image, first get the natural bounds.
 			decodeOptions.inJustDecodeBounds = true;
@@ -488,7 +488,7 @@ public class ImageRequest extends Request<Bitmap> {
 			}
 
 			decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-			Bitmap tempBitmap = ImageUtils.decodeByteArray(data, decodeOptions);
+			Bitmap tempBitmap = ImageUtils.decodeByteArray(data, decodeOptions).bitmap;
 
 			// If necessary, scale down to the maximal acceptable size.
 			if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)) {

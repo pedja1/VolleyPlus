@@ -339,7 +339,7 @@ public class ImageRequest extends Request<BitmapDrawable>
         if (mMaxWidth == 0 && mMaxHeight == 0)
         {
 
-            bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
+            bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions).bitmap;
             addMarker("read-full-size-image-from-file");
         }
         else
@@ -359,16 +359,14 @@ public class ImageRequest extends Request<BitmapDrawable>
             // Decode to the nearest power of two scaling factor.
             decodeOptions.inJustDecodeBounds = false;
             decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-            Bitmap tempBitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions);
+            ImageUtils.DecodeResult result = ImageUtils.decodeStream(bitmapFile, decodeOptions);
+            Bitmap tempBitmap = result.bitmap;
             addMarker(String.format("read-from-file-scaled-times-%d",
                     decodeOptions.inSampleSize));
             // If necessary, scale down to the maximal acceptable size.
             if (tempBitmap != null)
             {
-                float desiredRatio = (float) (desiredWidth / desiredHeight);
-                float tempRatio = (float) (tempBitmap.getWidth() / tempBitmap.getHeight());
-
-                if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
+                if (result.willRotationChangeAspect())//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
                     int tmpWidth = desiredWidth;
@@ -439,7 +437,7 @@ public class ImageRequest extends Request<BitmapDrawable>
 
         if (mMaxWidth == 0 && mMaxHeight == 0)
         {
-            bitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions);
+            bitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions).bitmap;
             addMarker("read-full-size-image-from-resource");
         }
         else
@@ -458,15 +456,13 @@ public class ImageRequest extends Request<BitmapDrawable>
             decodeOptions.inJustDecodeBounds = false;
 
             decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-            Bitmap tempBitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions);
+            ImageUtils.DecodeResult result = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions);
+            Bitmap tempBitmap = result.bitmap;
             addMarker(String.format("read-from-resource-scaled-times-%d", decodeOptions.inSampleSize));
             // If necessary, scale down to the maximal acceptable size.
             if (tempBitmap != null)
             {
-                float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
-
-                if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
+                if (result.willRotationChangeAspect())//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
                     int tmpWidth = desiredWidth;
@@ -561,19 +557,6 @@ public class ImageRequest extends Request<BitmapDrawable>
             // If necessary, scale down to the maximal acceptable size.
             if (tempBitmap != null)
             {
-                float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
-
-                if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
-                // Switch desired width/height to preserver aspect when scaling
-                {
-                    int tmpWidth = desiredWidth;
-                    //noinspection SuspiciousNameCombination
-                    desiredWidth = desiredHeight;
-                    //noinspection SuspiciousNameCombination
-                    desiredHeight = tmpWidth;
-                }
-
                 if (tempBitmap.getWidth() > desiredWidth || tempBitmap.getHeight() > desiredHeight)
                 {
                     bitmap = Bitmap.createScaledBitmap(tempBitmap, desiredWidth, desiredHeight, true);
@@ -625,7 +608,7 @@ public class ImageRequest extends Request<BitmapDrawable>
         Bitmap bitmap = null;
         if (mMaxWidth == 0 && mMaxHeight == 0)
         {
-            bitmap = ImageUtils.decodeByteArray(data, decodeOptions);
+            bitmap = ImageUtils.decodeByteArray(data, decodeOptions).bitmap;
         }
         else
         {
@@ -650,15 +633,13 @@ public class ImageRequest extends Request<BitmapDrawable>
             }
 
             decodeOptions.inSampleSize = ImageUtils.findBestSampleSize(actualWidth, actualHeight, desiredWidth, desiredHeight);
-            Bitmap tempBitmap = ImageUtils.decodeByteArray(data, decodeOptions);
+            ImageUtils.DecodeResult result = ImageUtils.decodeByteArray(data, decodeOptions);
+            Bitmap tempBitmap = result.bitmap;
 
             // If necessary, scale down to the maximal acceptable size.
             if (tempBitmap != null)
             {
-                float desiredRatio = desiredWidth / desiredHeight;
-                float tempRatio = tempBitmap.getWidth() / tempBitmap.getHeight();
-
-                if (desiredRatio != tempRatio)//since we are always keeping aspect, this means that image has been rotated (exif).
+                if (result.willRotationChangeAspect())//since we are always keeping aspect, this means that image has been rotated (exif).
                 // Switch desired width/height to preserver aspect when scaling
                 {
                     int tmpWidth = desiredWidth;

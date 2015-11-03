@@ -182,23 +182,21 @@ public class ImageUtils
      * @param maxSize  The maximum size (either width or height)
      * @return The new bitmap or null
      */
-    public static Bitmap decodeStream(final ContentResolver resolver, final Uri uri,
+    public static DecodeResult decodeStream(final ContentResolver resolver, final Uri uri,
                                       final int maxSize)
     {
-        Bitmap result = null;
         final InputStreamFactory factory = createInputStreamFactory(resolver, uri);
         try
         {
             final Point bounds = getImageBounds(factory);
             if (bounds == null)
             {
-                return result;
+                return new DecodeResult(null, 0);
             }
 
             final BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = Math.max(bounds.x / maxSize, bounds.y / maxSize);
-            result = decodeStream(factory, null, opts);
-            return result;
+            return decodeStream(factory, null, opts);
 
         }
         catch (FileNotFoundException exception)
@@ -215,7 +213,7 @@ public class ImageUtils
         catch (SecurityException exception)
         {
         }
-        return result;
+        return new DecodeResult(null, 0);
     }
 
     /**
@@ -226,9 +224,9 @@ public class ImageUtils
      * @param maxSize  The maximum size (either width or height)
      * @return The new bitmap or null
      */
-    public static Bitmap decodeStream(final ContentResolver resolver, final Uri uri, BitmapFactory.Options opts)
+    public static DecodeResult decodeStream(final ContentResolver resolver, final Uri uri, BitmapFactory.Options opts)
     {
-        Bitmap result = null;
+        DecodeResult result = null;
         final InputStreamFactory factory = createInputStreamFactory(resolver, uri);
         try
         {
@@ -249,20 +247,18 @@ public class ImageUtils
      * @param file The Image file
      * @return The new bitmap or null
      */
-    public static Bitmap decodeStream(final File file, BitmapFactory.Options opts)
+    public static DecodeResult decodeStream(final File file, BitmapFactory.Options opts)
     {
-        Bitmap result = null;
         final InputStreamFactory factory = createInputStreamFactory(file);
         try
         {
-            result = decodeStream(factory, null, opts);
-            return result;
+            return decodeStream(factory, null, opts);
         }
         catch (FileNotFoundException | IllegalArgumentException | SecurityException exception)
         {
             // Do nothing - the photo will appear to be missing
         }
-        return result;
+        return new DecodeResult(null, 0);
     }
 
     /**
@@ -271,15 +267,14 @@ public class ImageUtils
      * @param file The Image file
      * @return The new bitmap or null
      */
-    public static Bitmap decodeByteArray(final byte[] data, BitmapFactory.Options opts)
+    public static DecodeResult decodeByteArray(final byte[] data, BitmapFactory.Options opts)
     {
-        Bitmap result = null;
         try
         {
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             final int orientation = Exif.getOrientation(bis, -1);
             bis.close();
-            result = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+            Bitmap result = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
             // Rotate the Bitmap based on the orientation
             if(orientation != 0)
             {
@@ -298,10 +293,10 @@ public class ImageUtils
                 {
                     final Matrix matrix = new Matrix();
                     matrix.postRotate(orientation);
-                    return Bitmap.createBitmap(result, 0, 0, result.getWidth(), result.getHeight(), matrix, true);
+                    return new DecodeResult(Bitmap.createBitmap(result, 0, 0, result.getWidth(), result.getHeight(), matrix, true), orientation);
                 }
             }
-            return result;
+            return new DecodeResult(result, orientation);
         }
         catch (FileNotFoundException | IllegalArgumentException | SecurityException exception)
         {
@@ -311,7 +306,7 @@ public class ImageUtils
         {
             e.printStackTrace();
         }
-        return result;
+        return new DecodeResult(null, 0);
     }
 
     /**
@@ -331,16 +326,16 @@ public class ImageUtils
      * decoded, or, if opts is non-null, if opts requested only the
      * size be returned (in opts.outWidth and opts.outHeight)
      */
-    public static Bitmap decodeStream(InputStream is, Rect outPadding, BitmapFactory.Options opts)
+    public static DecodeResult decodeStream(InputStream is, Rect outPadding, BitmapFactory.Options opts)
     {
         try
         {
-            return BitmapFactory.decodeStream(is, outPadding, opts);
+            return new DecodeResult(BitmapFactory.decodeStream(is, outPadding, opts), 0);
         }
         catch (OutOfMemoryError oome)
         {
             Log.e(TAG, "ImageUtils#decodeStream(InputStream, Rect, Options) threw an OOME", oome);
-            return null;
+            return new DecodeResult(null, 0);
         }
     }
 
@@ -361,7 +356,7 @@ public class ImageUtils
      * decoded, or, if opts is non-null, if opts requested only the
      * size be returned (in opts.outWidth and opts.outHeight)
      */
-    public static Bitmap decodeStream(final InputStreamFactory factory, final Rect outPadding,
+    public static DecodeResult decodeStream(final InputStreamFactory factory, final Rect outPadding,
                                       final BitmapFactory.Options opts) throws FileNotFoundException
     {
         InputStream is = null;
@@ -389,20 +384,20 @@ public class ImageUtils
             {
                 final Matrix matrix = new Matrix();
                 matrix.postRotate(orientation);
-                return Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.getWidth(),
-                        originalBitmap.getHeight(), matrix, true);
+                return new DecodeResult(Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.getWidth(),
+                        originalBitmap.getHeight(), matrix, true), orientation);
             }
-            return originalBitmap;
+            return new DecodeResult(originalBitmap, orientation);
         }
         catch (OutOfMemoryError oome)
         {
             Log.e(TAG, "ImageUtils#decodeStream(InputStream, Rect, Options) threw an OOME", oome);
-            return null;
+            return new DecodeResult(null, 0);
         }
         catch (IOException ioe)
         {
             Log.e(TAG, "ImageUtils#decodeStream(InputStream, Rect, Options) threw an IOE", ioe);
-            return null;
+            return new DecodeResult(null, 0);
         }
         finally
         {
@@ -551,6 +546,23 @@ public class ImageUtils
                 Log.e(TAG, "Mailformed data URI: " + ex);
                 return null;
             }
+        }
+    }
+
+    public static class DecodeResult
+    {
+        public final Bitmap bitmap;
+        public final int orientation;
+
+        public DecodeResult(Bitmap bitmap, int orientation)
+        {
+            this.bitmap = bitmap;
+            this.orientation = orientation;
+        }
+
+        public boolean willRotationChangeAspect()
+        {
+            return orientation == 90 || orientation == 270 || orientation == -270 || orientation == -90;
         }
     }
 }
