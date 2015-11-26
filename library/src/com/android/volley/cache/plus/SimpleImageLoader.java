@@ -252,10 +252,11 @@ public class SimpleImageLoader extends ImageLoader {
 
         // Find image url from prior request
         String recycledImageUrl = imageContainer != null ? imageContainer.getRequestUrl() : null;
+        String recycledBitmapProcessorId = imageContainer != null ? imageContainer.getBitmapProcessorId() : null;
 
         // If the new requestUrl is null or the new requestUrl is different to the previous
         // recycled requestUrl
-        if (requestUrl == null || !requestUrl.equals(recycledImageUrl)) {
+        if (requestUrl == null || !requestUrl.equals(recycledImageUrl) || (mBitmapProcessor != null && mBitmapProcessor.getId() != null && !mBitmapProcessor.getId().equals(recycledBitmapProcessorId))) {
             if (imageContainer != null) {
                 // Cancel previous image request
                 imageContainer.cancelRequest();

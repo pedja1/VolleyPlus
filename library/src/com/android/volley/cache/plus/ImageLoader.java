@@ -83,7 +83,7 @@ public class ImageLoader {
     
     private ArrayMap<String, String> mHeaders;
 
-    private ImageRequest.BitmapProcessor mBitmapProcessor;
+    protected ImageRequest.BitmapProcessor mBitmapProcessor;
     
     /**
      * Constructs a new ImageLoader with a default LruCache
@@ -234,14 +234,14 @@ public class ImageLoader {
         BitmapDrawable cachedBitmap = mCache.getBitmap(cacheKey);
         if (cachedBitmap != null) {
             // Return the cached bitmap.
-            ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null);
+            ImageContainer container = new ImageContainer(cachedBitmap, requestUrl, null, null, mBitmapProcessor != null ? mBitmapProcessor.getId() : null);
             imageListener.onResponse(container, true, true);
             return container;
         }
 
         // The bitmap did not exist in the cache, fetch it!
         ImageContainer imageContainer =
-                new ImageContainer(null, requestUrl, cacheKey, imageListener);
+                new ImageContainer(null, requestUrl, cacheKey, imageListener, mBitmapProcessor != null ? mBitmapProcessor.getId() : null);
 
         // Update the caller to let them know that they should use the default bitmap.
         imageListener.onResponse(imageContainer, true, false);
@@ -296,7 +296,7 @@ public class ImageLoader {
 
         // The bitmap did not exist in the cache, fetch it!
         ImageContainer imageContainer =
-                new ImageContainer(drawable, requestUrl, cacheKey, imageListener);
+                new ImageContainer(drawable, requestUrl, cacheKey, imageListener, mBitmapProcessor != null ? mBitmapProcessor.getId() : null);
 
         // Update the caller to let them know that they should use the default bitmap.
         imageListener.onResponse(imageContainer, true, true);
@@ -419,6 +419,8 @@ public class ImageLoader {
         /** The request URL that was specified */
         private final String mRequestUrl;
 
+        private final String mBitmapProcessorId;
+
         /**
          * Constructs a BitmapContainer object.
          * @param bitmap The final bitmap (if it exists).
@@ -426,11 +428,12 @@ public class ImageLoader {
          * @param cacheKey The cache key that identifies the requested URL for this container.
          */
         public ImageContainer(BitmapDrawable bitmap, String requestUrl,
-                String cacheKey, ImageListener listener) {
+                String cacheKey, ImageListener listener, String bitmapProcessorId) {
             mBitmap = bitmap;
             mRequestUrl = requestUrl;
             mCacheKey = cacheKey;
             mListener = listener;
+            mBitmapProcessorId = bitmapProcessorId;
         }
 
         /**
@@ -471,6 +474,11 @@ public class ImageLoader {
          */
         public String getRequestUrl() {
             return mRequestUrl;
+        }
+
+        public String getBitmapProcessorId()
+        {
+            return mBitmapProcessorId;
         }
     }
 
