@@ -278,18 +278,7 @@ public class ImageUtils
             // Rotate the Bitmap based on the orientation
             if(orientation != 0)
             {
-                if(opts.inJustDecodeBounds)
-                {
-                    if(orientation == 90 || orientation == 270)
-                    {
-                        //noinspection SuspiciousNameCombination
-                        int tmpHeight = opts.outWidth;
-                        //noinspection SuspiciousNameCombination
-                        opts.outWidth = opts.outHeight;
-                        opts.outHeight = tmpHeight;
-                    }
-                }
-                else if (result != null)
+                if (result != null)
                 {
                     final Matrix matrix = new Matrix();
                     matrix.postRotate(orientation);
