@@ -364,8 +364,9 @@ public class ImageUtils
             {
                 Log.w(TAG, "ImageUtils#decodeStream(InputStream, Rect, Options): "
                         + "Image bytes cannot be decoded into a Bitmap");
-                throw new UnsupportedOperationException(
-                        "Image bytes cannot be decoded into a Bitmap.");
+                /*throw new UnsupportedOperationException(
+                        "Image bytes cannot be decoded into a Bitmap.");*/
+                return new DecodeResult(null, 0);
             }
 
             // Rotate the Bitmap based on the orientation
