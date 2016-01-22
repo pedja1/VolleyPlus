@@ -317,7 +317,7 @@ public class ImageRequest extends Request<BitmapDrawable>
      * <p/>
      * This version is for reading a Bitmap from file
      */
-    private Response<BitmapDrawable> doFileParse()
+    public Response<BitmapDrawable> doFileParse()
     {
 
         final String requestUrl = getUrl();
