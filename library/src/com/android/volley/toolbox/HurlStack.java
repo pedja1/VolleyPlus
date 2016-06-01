@@ -16,7 +16,6 @@
 
 package com.android.volley.toolbox;
 
-import static com.android.volley.misc.MultipartUtils.*;
 
 import android.text.TextUtils;
 
@@ -30,6 +29,7 @@ import com.android.volley.request.MultiPartRequest.MultiPartParam;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.BasicHttpEntity;
@@ -56,6 +56,9 @@ import java.util.Map.Entry;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+
+import static com.android.volley.misc.MultipartUtils.*;
+
 
 /**
  * An {@link HttpStack} based on {@link HttpURLConnection}.
@@ -135,8 +138,8 @@ public class HurlStack implements HttpStack {
 			connection.setRequestProperty(HEADER_USER_AGENT, mUserAgent);
 		}
 
-		for (String headerName : map.keySet()) {
-			connection.addRequestProperty(headerName, map.get(headerName));
+		for (Entry<String, String> header : map.entrySet()) {
+			connection.addRequestProperty(header.getKey(), header.getValue());
 		}
 		if (request instanceof MultiPartRequest) {
 			setConnectionParametersForMultipartRequest(connection, request);
@@ -156,7 +159,9 @@ public class HurlStack implements HttpStack {
 		}
 		StatusLine responseStatus = new BasicStatusLine(protocolVersion, connection.getResponseCode(), connection.getResponseMessage());
 		BasicHttpResponse response = new BasicHttpResponse(responseStatus);
-		response.setEntity(entityFromConnection(connection));
+		if (hasResponseBody(request.getMethod(), responseStatus.getStatusCode())) {
+			response.setEntity(entityFromConnection(connection));
+		}
 		for (Entry<String, List<String>> header : connection.getHeaderFields().entrySet()) {
 			if (header.getKey() != null) {
 				Header h = new BasicHeader(header.getKey(), header.getValue().get(0));
@@ -164,6 +169,20 @@ public class HurlStack implements HttpStack {
 			}
 		}
 		return response;
+	}
+
+	/**
+	 * Checks if a response message contains a body.
+	 * @see <a href="https://tools.ietf.org/html/rfc7230#section-3.3">RFC 7230 section 3.3</a>
+	 * @param requestMethod request method
+	 * @param responseCode response status code
+	 * @return whether the response has a body
+	 */
+	private static boolean hasResponseBody(int requestMethod, int responseCode) {
+		return requestMethod != Request.Method.HEAD
+				&& !(HttpStatus.SC_CONTINUE <= responseCode && responseCode < HttpStatus.SC_OK)
+				&& responseCode != HttpStatus.SC_NO_CONTENT
+				&& responseCode != HttpStatus.SC_NOT_MODIFIED;
 	}
 
 	/**
@@ -206,17 +225,17 @@ public class HurlStack implements HttpStack {
 			OutputStream out = connection.getOutputStream();
 			writer = new PrintWriter(new OutputStreamWriter(out, charset), true);
 
-			for (String key : multipartParams.keySet()) {
-				MultiPartParam param = multipartParams.get(key);
+			for (Entry<String, MultiPartParam> multipartParam : multipartParams.entrySet()) {
+				MultiPartParam param = multipartParam.getValue();
 
-				writer.append(boundary).append(CRLF).append(String.format(HEADER_CONTENT_DISPOSITION + COLON_SPACE + FORM_DATA, key)).append(CRLF)
+				writer.append(boundary).append(CRLF).append(String.format(HEADER_CONTENT_DISPOSITION + COLON_SPACE + FORM_DATA, multipartParam.getKey())).append(CRLF)
 						.append(HEADER_CONTENT_TYPE + COLON_SPACE + param.contentType).append(CRLF).append(CRLF).append(param.value).append(CRLF)
 						.flush();
 			}
 
-			for (String key : filesToUpload.keySet()) {
+			for (Entry<String, String> fileToUpload : filesToUpload.entrySet()) {
 
-				File file = new File(filesToUpload.get(key));
+				File file = new File(fileToUpload.getValue());
 
 				if (!file.exists()) {
 					throw new IOException(String.format("File not found: %s", file.getAbsolutePath()));
@@ -228,7 +247,7 @@ public class HurlStack implements HttpStack {
 
 				writer.append(boundary)
 						.append(CRLF)
-						.append(String.format(HEADER_CONTENT_DISPOSITION + COLON_SPACE + FORM_DATA + SEMICOLON_SPACE + FILENAME, key, file.getName()))
+						.append(String.format(HEADER_CONTENT_DISPOSITION + COLON_SPACE + FORM_DATA + SEMICOLON_SPACE + FILENAME, fileToUpload.getKey(), file.getName()))
 						.append(CRLF).append(HEADER_CONTENT_TYPE + COLON_SPACE + CONTENT_TYPE_OCTET_STREAM).append(CRLF)
 						.append(HEADER_CONTENT_TRANSFER_ENCODING + COLON_SPACE + BINARY).append(CRLF).append(CRLF).flush();
 
@@ -301,7 +320,12 @@ public class HurlStack implements HttpStack {
 	 * Create an {@link HttpURLConnection} for the specified {@code url}.
 	 */
 	protected HttpURLConnection createConnection(URL url) throws IOException {
-		return (HttpURLConnection) url.openConnection();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        // Workaround for the M release HttpURLConnection not observing the
+        // HttpURLConnection.setFollowRedirects() property.
+        // https://code.google.com/p/android/issues/detail?id=194495
+        connection.setInstanceFollowRedirects(HttpURLConnection.getFollowRedirects());
+        return connection;
 	}
 
 	/**
@@ -379,11 +403,13 @@ public class HurlStack implements HttpStack {
 			connection.setRequestMethod("TRACE");
 			break;
 		case Method.PATCH:
-			// connection.setRequestMethod("PATCH");
-			// If server doesnt support patch uncomment this
-			connection.setRequestMethod("POST");
-			connection.setRequestProperty("X-HTTP-Method-Override", "PATCH");
-			addBodyIfExists(connection, request);
+            if(request.shouldOverridePatch()){
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("X-HTTP-Method-Override", "PATCH");
+            } else {
+                connection.setRequestMethod("PATCH");
+            }
+            addBodyIfExists(connection, request);
 			break;
 		default:
 			throw new IllegalStateException("Unknown method type.");

@@ -47,13 +47,13 @@ import java.io.FileNotFoundException;
  */
 public class ImageRequest extends Request<Bitmap> {
     /** Socket timeout in milliseconds for image requests */
-    private static final int IMAGE_TIMEOUT_MS = 1000;
+    public static final int DEFAULT_IMAGE_TIMEOUT_MS = 1000;
 
     /** Default number of retries for image requests */
-    private static final int IMAGE_MAX_RETRIES = 2;
+    public static final int DEFAULT_IMAGE_MAX_RETRIES = 2;
 
     /** Default backoff multiplier for image requests */
-    private static final float IMAGE_BACKOFF_MULT = 2f;
+    public static final float DEFAULT_IMAGE_BACKOFF_MULT = 2f;
     
     private static final boolean PREFER_QUALITY_OVER_SPEED = false;
 
@@ -97,7 +97,7 @@ public class ImageRequest extends Request<Bitmap> {
             Config decodeConfig, Response.ErrorListener errorListener) {
         super(Method.GET, url, errorListener);
         setRetryPolicy(
-                new DefaultRetryPolicy(IMAGE_TIMEOUT_MS, IMAGE_MAX_RETRIES, IMAGE_BACKOFF_MULT));
+                new DefaultRetryPolicy(DEFAULT_IMAGE_TIMEOUT_MS, DEFAULT_IMAGE_MAX_RETRIES, DEFAULT_IMAGE_BACKOFF_MULT));
         
         mResources = resources;
         mContentResolver = contentResolver;
@@ -218,7 +218,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
-		Bitmap bitmap = null;
+		Bitmap bitmap;
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 
 			bitmap = getVideoFrame(bitmapFile.getAbsolutePath());
@@ -287,7 +287,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
-		Bitmap bitmap = null;
+		Bitmap bitmap;
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 
 			bitmap = ImageUtils.decodeStream(bitmapFile, decodeOptions).bitmap;
@@ -350,7 +350,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
-		Bitmap bitmap = null;
+		Bitmap bitmap;
 		
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 			bitmap = ImageUtils.decodeStream(mContentResolver, imageUri, decodeOptions).bitmap;
@@ -409,7 +409,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
-		Bitmap bitmap = null;
+		Bitmap bitmap;
 		if (mMaxWidth == 0 && mMaxHeight == 0) {
 
 			bitmap = BitmapFactory.decodeResource(mResources, resourceId,
@@ -462,7 +462,7 @@ public class ImageRequest extends Request<Bitmap> {
 		decodeOptions.inInputShareable = true;
 		decodeOptions.inPurgeable = true;
 		decodeOptions.inPreferredConfig = mDecodeConfig;
-        Bitmap bitmap = null;
+        Bitmap bitmap;
         if (mMaxWidth == 0 && mMaxHeight == 0) {
             bitmap = ImageUtils.decodeByteArray(data, decodeOptions).bitmap;
         } else {
