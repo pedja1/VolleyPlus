@@ -3,8 +3,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.0.0-beta6'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5'
+        classpath 'com.android.tools.build:gradle:2.1.0'
     }
 }
 allprojects {
@@ -14,11 +13,16 @@ allprojects {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group = 'com.pedja1'
+version = '1.0.0'
 
 dependencies {
-    compile 'com.android.support:support-v4:23.2.0'
+    compile 'com.android.support:support-v4:23.3.0'
     compile 'com.google.code.gson:gson:2.4'
+    archives "org.apache.maven.wagon:wagon-ssh:2.2"
 }
 
 android {
@@ -27,7 +31,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_7
     }
     compileSdkVersion 23
-    buildToolsVersion '23.0.2'
+    buildToolsVersion '23.0.3'
     useLibrary 'org.apache.http.legacy'
     sourceSets {
         main {
@@ -71,4 +75,29 @@ android {
         archives androidSourcesJar
         archives androidJavadocsJar
     }
+
+    androidJavadocs {
+        failOnError false
+    }
 }
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            configuration = configurations.archives
+            repository(url: "scp://maven.android-forever.com/var/www/vhosts/pedjaapps.net/maven.android-forever.com") {
+                authentication(userName: androidforeverSshUsername, privateKey: androidforeverSshPrivateKey, passphrase: androidforeverSshPassphrase)
+            }
+
+            pom.project {
+                artifactId 'volleyplus'
+                name 'volleyplus'
+                packaging 'aar'
+                description 'VolleyPlus'
+            }
+        }
+    }
+}
+

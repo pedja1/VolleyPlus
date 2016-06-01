@@ -16,12 +16,15 @@
 
 package com.android.volley.toolbox;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.android.volley.Request;
+import com.android.volley.Request.Method;
+import com.android.volley.Response.ProgressListener;
+import com.android.volley.error.AuthFailureError;
+import com.android.volley.request.MultiPartRequest;
+import com.android.volley.request.MultiPartRequest.MultiPartParam;
+import com.android.volley.toolbox.multipart.FilePart;
+import com.android.volley.toolbox.multipart.MultipartProgressEntity;
+import com.android.volley.toolbox.multipart.StringPart;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -41,15 +44,12 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
-import com.android.volley.Request;
-import com.android.volley.Request.Method;
-import com.android.volley.Response.ProgressListener;
-import com.android.volley.error.AuthFailureError;
-import com.android.volley.request.MultiPartRequest;
-import com.android.volley.request.MultiPartRequest.MultiPartParam;
-import com.android.volley.toolbox.multipart.FilePart;
-import com.android.volley.toolbox.multipart.MultipartProgressEntity;
-import com.android.volley.toolbox.multipart.StringPart;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * An HttpStack that performs request over an {@link HttpClient}.
@@ -123,7 +123,7 @@ public class HttpClientStack implements HttpStack {
 			return new HttpGet(request.getUrl());
 		case Method.DELETE:
 			HttpDelete deleteRequest = new HttpDelete(request.getUrl());
-			setEntityIfNonEmptyBody(deleteRequest, request);
+			//setEntityIfNonEmptyBody(deleteRequest, request);
 			return deleteRequest;
 		case Method.POST: {
 			HttpPost postRequest = new HttpPost(request.getUrl());
@@ -187,7 +187,7 @@ public class HttpClientStack implements HttpStack {
 			}
 			httpRequest.setEntity(multipartEntity);
 
-		} else {
+		} else{
 			httpRequest.addHeader(HEADER_CONTENT_TYPE, request.getBodyContentType());
 			byte[] body = request.getBody();
 			if (body != null) {
