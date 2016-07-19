@@ -16,12 +16,15 @@
 
 package com.android.volley.toolbox;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.android.volley.Request;
+import com.android.volley.Request.Method;
+import com.android.volley.Response.ProgressListener;
+import com.android.volley.error.AuthFailureError;
+import com.android.volley.request.MultiPartRequest;
+import com.android.volley.request.MultiPartRequest.MultiPartParam;
+import com.android.volley.toolbox.multipart.FilePart;
+import com.android.volley.toolbox.multipart.MultipartProgressEntity;
+import com.android.volley.toolbox.multipart.StringPart;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -41,15 +44,12 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
-import com.android.volley.Request;
-import com.android.volley.Request.Method;
-import com.android.volley.Response.ProgressListener;
-import com.android.volley.error.AuthFailureError;
-import com.android.volley.request.MultiPartRequest;
-import com.android.volley.request.MultiPartRequest.MultiPartParam;
-import com.android.volley.toolbox.multipart.FilePart;
-import com.android.volley.toolbox.multipart.MultipartProgressEntity;
-import com.android.volley.toolbox.multipart.StringPart;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * An HttpStack that performs request over an {@link HttpClient}.
@@ -65,16 +65,16 @@ public class HttpClientStack implements HttpStack {
 	}
 
 	private static void addHeaders(HttpUriRequest httpRequest, Map<String, String> headers) {
-		for (String key : headers.keySet()) {
-			httpRequest.setHeader(key, headers.get(key));
+		for (Map.Entry<String, String> header : headers.entrySet()) {
+			httpRequest.setHeader(header.getKey(), header.getValue());
 		}
 	}
 
 	@SuppressWarnings("unused")
 	private static List<NameValuePair> getPostParameterPairs(Map<String, String> postParams) {
 		List<NameValuePair> result = new ArrayList<NameValuePair>(postParams.size());
-		for (String key : postParams.keySet()) {
-			result.add(new BasicNameValuePair(key, postParams.get(key)));
+		for (Map.Entry<String, String> postParam : postParams.entrySet()) {
+			result.add(new BasicNameValuePair(postParam.getKey(), postParam.getValue()));
 		}
 		return result;
 	}
@@ -122,7 +122,9 @@ public class HttpClientStack implements HttpStack {
 		case Method.GET:
 			return new HttpGet(request.getUrl());
 		case Method.DELETE:
-			return new HttpDelete(request.getUrl());
+			HttpDelete deleteRequest = new HttpDelete(request.getUrl());
+			//setEntityIfNonEmptyBody(deleteRequest, request);
+			return deleteRequest;
 		case Method.POST: {
 			HttpPost postRequest = new HttpPost(request.getUrl());
 			setEntityIfNonEmptyBody(postRequest, request);
@@ -165,12 +167,12 @@ public class HttpClientStack implements HttpStack {
 			final Map<String, MultiPartParam> multipartParams = ((MultiPartRequest<?>) request).getMultipartParams();
 			final Map<String, String> filesToUpload = ((MultiPartRequest<?>) request).getFilesToUpload();
 
-			for (String key : multipartParams.keySet()) {
-				multipartEntity.addPart(new StringPart(key, multipartParams.get(key).value));
+			for (Map.Entry<String, MultiPartParam> multipartParam : multipartParams.entrySet()) {
+				multipartEntity.addPart(new StringPart(multipartParam.getKey(), multipartParam.getValue().value));
 			}
 
-			for (String key : filesToUpload.keySet()) {
-				File file = new File(filesToUpload.get(key));
+			for (Map.Entry<String, String> fileToUpload : filesToUpload.entrySet()) {
+				File file = new File(fileToUpload.getValue());
 
 				if (!file.exists()) {
 					throw new IOException(String.format("File not found: %s", file.getAbsolutePath()));
@@ -180,12 +182,12 @@ public class HttpClientStack implements HttpStack {
 					throw new IOException(String.format("File is a directory: %s", file.getAbsolutePath()));
 				}
 
-				FilePart filePart = new FilePart(key, file, null, null);
+				FilePart filePart = new FilePart(fileToUpload.getKey(), file, null, null);
 				multipartEntity.addPart(filePart);
 			}
 			httpRequest.setEntity(multipartEntity);
 
-		} else {
+		} else{
 			httpRequest.addHeader(HEADER_CONTENT_TYPE, request.getBodyContentType());
 			byte[] body = request.getBody();
 			if (body != null) {

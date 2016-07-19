@@ -34,6 +34,8 @@ import com.android.volley.NetworkResponse;
  */
 public class HttpHeaderParser {
 
+    private HttpHeaderParser() {}
+
     /**
      * Extracts a {@link Cache.Entry} from a {@link NetworkResponse}.
      *
@@ -153,7 +155,7 @@ public class HttpHeaderParser {
        long now = System.currentTimeMillis();
        Map<String, String> headers = response.headers;
        long serverDate = 0;
-       String serverEtag = null;
+       String serverEtag;
        String headerValue;
 
        headerValue = headers.get("Date");
@@ -192,7 +194,7 @@ public class HttpHeaderParser {
         long now = System.currentTimeMillis();
         Map<String, String> headers = response.headers;
         long serverDate = 0;
-        String serverEtag = null;
+        String serverEtag;
         String headerValue;
 
         headerValue = headers.get("Date");

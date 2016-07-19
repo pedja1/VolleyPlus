@@ -20,7 +20,6 @@ import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.SystemClock;
 import android.text.TextUtils;
 
 import com.android.volley.VolleyLog.MarkerLog;
@@ -92,11 +91,8 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     /** Whether or not a response has been delivered for this request yet. */
     private boolean mResponseDelivered = false;
 
-    // A cheap variant of request tracing used to dump slow requests.
-    private long mRequestBirthTime = 0;
-
-    /** Threshold at which we should log the request (even when debug logging is not enabled). */
-    private static final long SLOW_REQUEST_THRESHOLD_MS = 3000;
+    /** Whether the request should be retried in the event of an HTTP 5xx (server) error. */
+    private boolean mShouldRetryServerErrors = false;
 
     /** The retry policy for this request. */
     private RetryPolicy mRetryPolicy;
@@ -123,6 +119,9 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     
     /** {@link Priority} for this request     */
     private Priority mPriority;
+
+    /** Whether or not patch method should be overridden. */
+    private boolean mShouldOverridePatch = false;
 
     /**
      * Creates a new request with the given method (one of the values from {@link Method}),
@@ -236,8 +235,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     	try {
             if (MarkerLog.ENABLED) {
                 mEventLog.add(tag, Thread.currentThread().getId());
-            } else if (mRequestBirthTime == 0) {
-                mRequestBirthTime = SystemClock.elapsedRealtime();
             }
 		} catch (Exception e) {
 		}
@@ -274,11 +271,6 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 			} catch (Exception e) {
 			}
 
-        } else {
-            long requestTime = SystemClock.elapsedRealtime() - mRequestBirthTime;
-            if (requestTime >= SLOW_REQUEST_THRESHOLD_MS) {
-                VolleyLog.d("%d ms: %s", requestTime, this.toString());
-            }
         }
     }
 
@@ -568,6 +560,23 @@ public abstract class Request<T> implements Comparable<Request<T>> {
     }
 
     /**
+     * Sets whether or not the request should be retried in the event of an HTTP 5xx (server) error.
+     *
+     * @return This Request object to allow for chaining.
+     */
+    public final Request<?> setShouldRetryServerErrors(boolean shouldRetryServerErrors) {
+        mShouldRetryServerErrors = shouldRetryServerErrors;
+        return this;
+    }
+
+    /**
+     * Returns true if this request should be retried in the event of an HTTP 5xx (server) error.
+     */
+    public final boolean shouldRetryServerErrors() {
+        return mShouldRetryServerErrors;
+    }
+
+    /**
      * Priority values.  Requests will be processed from higher priorities to
      * lower priorities, in FIFO order.
      */
@@ -694,4 +703,21 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         return (mCanceled ? "[X] " : "[ ] ") + getUrl() + " " + trafficStatsTag + " "
                 + getPriority() + " " + mSequence;
     }
+
+
+    /**
+     * @param override if true overrides patch method to post with X-HTTP-Method-Override
+     */
+    public final void overridePatch(boolean override) {
+        mShouldOverridePatch = override;
+    }
+
+
+    /**
+     * Returns true if responses to this request should be cached.
+     */
+    public final boolean shouldOverridePatch() {
+        return mShouldOverridePatch;
+    }
+
 }
