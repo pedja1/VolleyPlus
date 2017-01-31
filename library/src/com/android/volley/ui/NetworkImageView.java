@@ -20,7 +20,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -28,26 +28,24 @@ import android.graphics.drawable.TransitionDrawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageView;
 
 import com.android.volley.Response.Listener;
-import com.android.volley.cache.SimpleImageLoader;
-import com.android.volley.error.VolleyError;
-import com.android.volley.misc.Utils;
 import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.cache.SimpleImageLoader;
 import com.android.volley.toolbox.ImageLoader.ImageContainer;
 import com.android.volley.toolbox.ImageLoader.ImageListener;
+import com.android.volley.error.VolleyError;
+import com.android.volley.misc.Utils;
 
 /**
  * Handles fetching an image from a URL as well as the life-cycle of the
  * associated request.
  */
-public class NetworkImageView extends ImageView {
+public class NetworkImageView extends RecyclingImageView {
     private final int[] attrsArray = {
             android.R.attr.src,
     };
-    private static final ColorDrawable transparentDrawable = new ColorDrawable(
-            android.R.color.transparent);
+    private static final ColorDrawable transparentDrawable = new ColorDrawable(Color.TRANSPARENT);
 	private static final int HALF_FADE_IN_TIME = Utils.ANIMATION_FADE_IN_TIME / 2;
     /** The URL of the network image to load */
     protected String mUrl;
@@ -68,10 +66,10 @@ public class NetworkImageView extends ImageView {
     /** Current ImageContainer. (either in-flight or finished) */
     protected ImageContainer mImageContainer;
     
-	private boolean mFadeInImage = true;
+	private boolean mFadeInImage = false;
 	private int mMaxImageHeight = 0;
 	private int mMaxImageWidth = 0;
-    private Listener<Bitmap> mListener;
+    private Listener<BitmapDrawable> mListener;
     
     public NetworkImageView(Context context) {
         this(context, null);
@@ -144,12 +142,8 @@ public class NetworkImageView extends ImageView {
         mFadeInImage = fadeInImage;
     }
 	
-    public void setImageListener(Listener<Bitmap> listener) {
+    public void setImageListener(Listener<BitmapDrawable> listener) {
     	mListener = listener;
-    }
-    
-    public Listener<Bitmap> getImageListener() {
-    	return mListener;
     }
 
     /**
@@ -159,7 +153,6 @@ public class NetworkImageView extends ImageView {
 	void loadImageIfNecessary(final boolean isInLayoutPass) {
         int width = getWidth();
         int height = getHeight();
-        ScaleType scaleType = getScaleType();
 
         boolean wrapWidth = false, wrapHeight = false;
         if (getLayoutParams() != null) {
@@ -221,7 +214,7 @@ public class NetworkImageView extends ImageView {
                     }
 
                     @Override
-                    public void onResponse(final ImageContainer response, boolean isImmediate) {
+                    public void onResponse(final ImageContainer response, boolean isImmediate, final boolean isFinal) {
                         // If this was an immediate response that was delivered inside of a layout
                         // pass do not set the image immediately as it will trigger a requestLayout
                         // inside of a layout. Instead, defer setting the image by posting back to
@@ -230,14 +223,13 @@ public class NetworkImageView extends ImageView {
                             post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    onResponse(response, false);
+                                    onResponse(response, false, isFinal);
                                 }
                             });
                             return;
                         }
 
                         if (response.getBitmap() != null) {
-                            //setImageBitmap(response.getBitmap(), mFadeInImage);
                             setAnimateImageBitmap(response.getBitmap(), mFadeInImage);
                         	if(null != mListener){
                         		mListener.onResponse(response.getBitmap());
@@ -247,14 +239,14 @@ public class NetworkImageView extends ImageView {
                             setImageResource(mDefaultImageId);
                         }
                     }
-        		}, maxWidth, maxHeight, scaleType);
+        		}, maxWidth, maxHeight);
 
         // update the ImageContainer to be the new bitmap container.
         mImageContainer = newContainer;
     }
 	
 	@SuppressLint("NewApi")
-	private void setAnimateImageBitmap(final Bitmap bitmap, boolean fadeIn) {
+	private void setAnimateImageBitmap(final BitmapDrawable bitmap, boolean fadeIn) {
 
         // If we're fading in and on HC MR1+
         if (fadeIn && Utils.hasHoneycombMR1()) {
@@ -268,7 +260,7 @@ public class NetworkImageView extends ImageView {
                     .setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            setImageBitmap(bitmap);
+                            setImageDrawable(bitmap);
                             animate()
                                     .alpha(1f)
                                     .scaleY(1f)
@@ -286,18 +278,17 @@ public class NetworkImageView extends ImageView {
                 initialDrawable = transparentDrawable;
             }
             
-            BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), bitmap);
             // Use TransitionDrawable to fade in
             final TransitionDrawable td =
                     new TransitionDrawable(new Drawable[] {
                             initialDrawable,
-                            bitmapDrawable
+                            bitmap
                     });
             setImageDrawable(td);
             td.startTransition(Utils.ANIMATION_FADE_IN_TIME);
         } else {
             // No fade in, just set bitmap directly
-            setImageBitmap(bitmap);
+            setImageDrawable(bitmap);
         }
     }
     
@@ -305,7 +296,7 @@ public class NetworkImageView extends ImageView {
 		if (mDefaultImageId != 0) {
 			setImageResource(mDefaultImageId);
 		} else {
-			setImageBitmap(null);
+			setImageDrawable(null);
 		}
 	}
 
@@ -323,7 +314,7 @@ public class NetworkImageView extends ImageView {
             // If the view was bound to an image request, cancel it and clear
             // out the image from the view.
             mImageContainer.cancelRequest();
-            setImageBitmap(null);
+            setImageDrawable(null);
             // also clear out the container so we can reload the image if necessary.
             mImageContainer = null;
         }
@@ -334,5 +325,10 @@ public class NetworkImageView extends ImageView {
     protected void drawableStateChanged() {
         super.drawableStateChanged();
         invalidate();
+    }
+
+    public Listener<BitmapDrawable> getImageListener()
+    {
+        return mListener;
     }
 }

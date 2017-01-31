@@ -22,6 +22,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -41,7 +42,6 @@ import com.android.volley.misc.Utils;
 import com.android.volley.toolbox.BasicNetwork;
 import com.android.volley.toolbox.HttpClientStack;
 import com.android.volley.toolbox.HurlStack;
-import com.android.volley.toolbox.ImageCache;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.ui.PhotoView;
 
@@ -56,9 +56,9 @@ import java.util.ArrayList;
  * you must store the {@link com.android.volley.Request} in your ViewHolder type class and pass it
  * into loadImage to ensure the request is canceled as views are recycled.
  */
-public class SimpleImageLoader extends ImageLoader {
-    private static final ColorDrawable transparentDrawable = new ColorDrawable(
-            android.R.color.transparent);
+public class SimpleImageLoader extends ImageLoader
+{
+    private static final ColorDrawable transparentDrawable = new ColorDrawable(Color.TRANSPARENT);
     private static final int HALF_FADE_IN_TIME = Utils.ANIMATION_FADE_IN_TIME / 2;
     protected static final String CACHE_DIR = "images";
 
@@ -70,40 +70,47 @@ public class SimpleImageLoader extends ImageLoader {
     /**
      * {@inheritDoc}
      */
-    public SimpleImageLoader(RequestQueue queue) {
-        this(queue, BitmapCache.getInstance(null));
+    public SimpleImageLoader(RequestQueue queue)
+    {
+        this(queue, BitmapImageCache.getInstance(null));
     }
 
     /**
      * {@inheritDoc}
      */
-    public SimpleImageLoader(RequestQueue queue, ImageCache imageCache) {
+    public SimpleImageLoader(RequestQueue queue, ImageCache imageCache)
+    {
         this(queue, imageCache, null);
     }
 
     /**
      * {@inheritDoc}
      */
-    public SimpleImageLoader(RequestQueue queue, ImageCache imageCache, Resources resources) {
+    public SimpleImageLoader(RequestQueue queue, ImageCache imageCache, Resources resources)
+    {
         super(queue, imageCache, resources);
     }
 
     /**
      * Creates an ImageLoader with Bitmap memory cache.
+     *
      * @param activity
      */
-    public SimpleImageLoader(FragmentActivity activity) {
+    public SimpleImageLoader(FragmentActivity activity)
+    {
         super(newRequestQueue(activity, null),
                 BitmapImageCache.getInstance(activity.getSupportFragmentManager()),
                 activity.getResources());
     }
-    
+
     /**
      * Creates an ImageLoader with Bitmap memory cache.
+     *
      * @param activity
      * @param imageCacheParams
      */
-    public SimpleImageLoader(FragmentActivity activity, ImageCacheParams imageCacheParams) {
+    public SimpleImageLoader(FragmentActivity activity, ImageCacheParams imageCacheParams)
+    {
         super(newRequestQueue(activity, imageCacheParams),
                 BitmapImageCache.getInstance(activity.getSupportFragmentManager(), imageCacheParams),
                 activity.getResources());
@@ -111,19 +118,23 @@ public class SimpleImageLoader extends ImageLoader {
 
     /**
      * Creates an ImageLoader with Bitmap memory cache.
+     *
      * @param context
      */
-    public SimpleImageLoader(Context context) {
+    public SimpleImageLoader(Context context)
+    {
         super(newRequestQueue(context, null), BitmapImageCache.getInstance(null),
                 context.getResources());
     }
 
     /**
      * Creates an ImageLoader with Bitmap memory cache.
+     *
      * @param context
      * @param imageCacheParams
      */
-    public SimpleImageLoader(Context context, ImageCacheParams imageCacheParams) {
+    public SimpleImageLoader(Context context, ImageCacheParams imageCacheParams)
+    {
         super(newRequestQueue(context, imageCacheParams),
                 BitmapImageCache.getInstance(null, imageCacheParams),
                 context.getResources());
@@ -132,75 +143,77 @@ public class SimpleImageLoader extends ImageLoader {
     /**
      * Starts processing requests on the {@link RequestQueue}.
      */
-    public void startProcessingQueue() {
+    public void startProcessingQueue()
+    {
         getRequestQueue().start();
     }
 
     /**
      * Stops processing requests on the {@link RequestQueue}.
      */
-    public void stopProcessingQueue() {
+    public void stopProcessingQueue()
+    {
         getRequestQueue().stop();
     }
-    
+
     /**
      * Clears {@link Cache}.
      */
-    public void clearCache() {
-    	getCache().clear();
-	}
-    
+    public void clearCache()
+    {
+        getCache().clear();
+    }
+
     /**
-     * Flushed {@link Cache} and clears {@link com.android.volley.toolbox.ImageCache}.
+     * Flushed {@link Cache} and clears {@link ImageCache}.
      */
-    public void flushCache() {
-    	getImageCache().clear();
-    	getCache().flush();
-	}
-    
+    public void flushCache()
+    {
+        getImageCache().clear();
+        getCache().flush();
+    }
+
     /**
      * Closes {@link Cache}.
      */
-    public void closeCache() {
-    	getCache().close();
-	}
-    
-    public boolean isCached(String key) {
-    	return getCache().get(key) != null;
-	}
-
-    @Deprecated
-    public void invalidate(String key) {
-        final String cacheKey = getCacheKey(key, mMaxImageWidth, mMaxImageHeight);
-    	getImageCache().invalidateBitmap(cacheKey);
-    	getCache().invalidate(key, true);
-	}
-
-    public void invalidate(String key, ImageView view) {
-        final String cacheKey = getCacheKey(key, mMaxImageWidth, mMaxImageHeight, view.getScaleType());
-        getImageCache().invalidateBitmap(cacheKey);
-        getCache().invalidate(key, true);
-        //default cache
-        invalidate(key);
+    public void closeCache()
+    {
+        getCache().close();
     }
 
-	public SimpleImageLoader setFadeInImage(boolean fadeInImage) {
+    public void invalidate(String key)
+    {
+        final String cacheKey = getCacheKey(key, mMaxImageWidth, mMaxImageHeight);
+        getImageCache().invalidateBitmap(cacheKey);
+        getCache().invalidate(key, true);
+    }
+
+    public SimpleImageLoader setFadeInImage(boolean fadeInImage)
+    {
         mFadeInImage = fadeInImage;
         return this;
     }
 
-    public SimpleImageLoader setMaxImageSize(int maxImageWidth, int maxImageHeight) {
+    public SimpleImageLoader setMaxImageSize(int maxImageWidth, int maxImageHeight)
+    {
         mMaxImageWidth = maxImageWidth;
         mMaxImageHeight = maxImageHeight;
         return this;
     }
 
+    public SimpleImageLoader setMaxImageSize(int maxImageSize)
+    {
+        return setMaxImageSize(maxImageSize, maxImageSize);
+    }
+
     /**
      * A default placeholder image while the image is being fetched and loaded.
+     *
      * @param defaultPlaceHolderResId
      * @return
      */
-    public  SimpleImageLoader setDefaultDrawable(int defaultPlaceHolderResId){
+    public SimpleImageLoader setDefaultDrawable(int defaultPlaceHolderResId)
+    {
         mPlaceHolderDrawables = new ArrayList<Drawable>(1);
         mPlaceHolderDrawables.add(defaultPlaceHolderResId == -1 ?
                 null : getResources().getDrawable(defaultPlaceHolderResId));
@@ -209,47 +222,70 @@ public class SimpleImageLoader extends ImageLoader {
 
     /**
      * A default placeholder image while the image is being fetched and loaded.
+     *
      * @param placeHolderDrawables
      * @return
      */
-    public  SimpleImageLoader setDefaultDrawables(ArrayList<Drawable> placeHolderDrawables){
+    public SimpleImageLoader setDefaultDrawables(ArrayList<Drawable> placeHolderDrawables)
+    {
         mPlaceHolderDrawables = placeHolderDrawables;
         return this;
     }
 
-    public SimpleImageLoader setMaxImageSize(int maxImageSize) {
-        return setMaxImageSize(maxImageSize, maxImageSize);
-    }
-    
-    public int getMaxImageWidth() {
+    public int getMaxImageWidth()
+    {
         return mMaxImageWidth;
     }
 
-    public int getMaxImageHeight() {
+    public int getMaxImageHeight()
+    {
         return mMaxImageHeight;
     }
-    
-    //Get 
-    public ImageContainer get(String requestUrl, ImageView imageView) {
+
+    //Get
+    @Override
+    public ImageContainer get(String requestUrl, final ImageListener listener)
+    {
+        return get(requestUrl, listener, mMaxImageWidth, mMaxImageHeight, DEFAULT_DECODE_CONFIG);
+    }
+
+    @Override
+    public ImageContainer get(String requestUrl, final ImageListener listener, Bitmap.Config decodeConfig)
+    {
+        return get(requestUrl, listener, mMaxImageWidth, mMaxImageHeight, decodeConfig);
+    }
+
+    public ImageContainer get(String requestUrl, ImageView imageView)
+    {
         return get(requestUrl, imageView, 0);
     }
-    
-    public ImageContainer get(String requestUrl, ImageView imageView, int maxImageWidth, int maxImageHeight) {
+
+    public ImageContainer get(String requestUrl, ImageView imageView, int maxImageWidth, int maxImageHeight)
+    {
         return get(requestUrl, imageView, mPlaceHolderDrawables != null ? mPlaceHolderDrawables.get(0) : null, maxImageWidth, maxImageHeight);
     }
 
-    public ImageContainer get(String requestUrl, ImageView imageView, int placeHolderIndex) {
-        return get(requestUrl, imageView, 
-        		mPlaceHolderDrawables != null ? mPlaceHolderDrawables.get(placeHolderIndex) : null,
+    public ImageContainer get(String requestUrl, ImageView imageView, int placeHolderIndex)
+    {
+        return get(requestUrl, imageView,
+                mPlaceHolderDrawables != null ? mPlaceHolderDrawables.get(placeHolderIndex) : null,
                 mMaxImageWidth, mMaxImageHeight);
     }
 
-    public ImageContainer get(String requestUrl, ImageView imageView, Drawable placeHolder) {
+    public ImageContainer get(String requestUrl, ImageView imageView, Drawable placeHolder)
+    {
         return get(requestUrl, imageView, placeHolder, mMaxImageWidth, mMaxImageHeight);
     }
 
     public ImageContainer get(String requestUrl, ImageView imageView, Drawable placeHolder,
-            int maxWidth, int maxHeight) {
+                              int maxWidth, int maxHeight)
+    {
+        return get(requestUrl, imageView, placeHolder, maxWidth, maxHeight, DEFAULT_DECODE_CONFIG);
+    }
+
+    public ImageContainer get(String requestUrl, ImageView imageView, Drawable placeHolder,
+                              int maxWidth, int maxHeight, Bitmap.Config decodeConfig)
+    {
 
         // Find any old image load request pending on this ImageView (in case this view was
         // recycled)
@@ -259,50 +295,61 @@ public class SimpleImageLoader extends ImageLoader {
 
         // Find image url from prior request
         String recycledImageUrl = imageContainer != null ? imageContainer.getRequestUrl() : null;
+        String recycledBitmapProcessorId = imageContainer != null ? imageContainer.getBitmapProcessorId() : null;
 
         // If the new requestUrl is null or the new requestUrl is different to the previous
         // recycled requestUrl
-        if (requestUrl == null || !requestUrl.equals(recycledImageUrl)) {
-            if (imageContainer != null) {
+        if (requestUrl == null || !requestUrl.equals(recycledImageUrl) || (mBitmapProcessor != null && mBitmapProcessor.getId() != null && !mBitmapProcessor.getId().equals(recycledBitmapProcessorId)))
+        {
+            if (imageContainer != null)
+            {
                 // Cancel previous image request
                 imageContainer.cancelRequest();
                 imageView.setTag(null);
             }
-            if (requestUrl != null) {
+            if (requestUrl != null)
+            {
                 // Queue new request to fetch image
                 imageContainer = get(requestUrl,
                         getImageListener(getResources(), imageView, placeHolder, mFadeInImage),
-                        maxWidth, maxHeight, imageView.getScaleType());
+                        maxWidth, maxHeight, decodeConfig);
                 // Store request in ImageView tag
                 imageView.setTag(imageContainer);
-            } else {
-            	if(!(imageView instanceof PhotoView)){
-            		imageView.setImageDrawable(placeHolder);
-            	}
+            }
+            else
+            {
+                if (!(imageView instanceof PhotoView))
+                {
+                    imageView.setImageDrawable(placeHolder);
+                }
                 imageView.setTag(null);
             }
         }
 
         return imageContainer;
     }
-    
+
     //Set
-    public ImageContainer set(String requestUrl, ImageView imageView, Bitmap bitmap) {
+    public ImageContainer set(String requestUrl, ImageView imageView, Bitmap bitmap)
+    {
         return set(requestUrl, imageView, 0, bitmap);
     }
 
-    public ImageContainer set(String requestUrl, ImageView imageView, int placeHolderIndex, Bitmap bitmap) {
-        return set(requestUrl, imageView, 
-        		mPlaceHolderDrawables != null ? mPlaceHolderDrawables.get(placeHolderIndex) : null,
+    public ImageContainer set(String requestUrl, ImageView imageView, int placeHolderIndex, Bitmap bitmap)
+    {
+        return set(requestUrl, imageView,
+                mPlaceHolderDrawables != null ? mPlaceHolderDrawables.get(placeHolderIndex) : null,
                 mMaxImageWidth, mMaxImageHeight, bitmap);
     }
 
-    public ImageContainer set(String requestUrl, ImageView imageView, Drawable placeHolder, Bitmap bitmap) {
+    public ImageContainer set(String requestUrl, ImageView imageView, Drawable placeHolder, Bitmap bitmap)
+    {
         return set(requestUrl, imageView, placeHolder, mMaxImageWidth, mMaxImageHeight, bitmap);
     }
 
     public ImageContainer set(String requestUrl, ImageView imageView, Drawable placeHolder,
-            int maxWidth, int maxHeight, Bitmap bitmap) {
+                              int maxWidth, int maxHeight, Bitmap bitmap)
+    {
 
         // Find any old image load request pending on this ImageView (in case this view was
         // recycled)
@@ -313,59 +360,75 @@ public class SimpleImageLoader extends ImageLoader {
         // Find image url from prior request
         //String recycledImageUrl = imageContainer != null ? imageContainer.getRequestUrl() : null;
 
-        if (imageContainer != null) {
+        if (imageContainer != null)
+        {
             // Cancel previous image request
             imageContainer.cancelRequest();
             imageView.setTag(null);
         }
-        if (requestUrl != null) {
+        if (requestUrl != null)
+        {
             // Queue new request to fetch image
             imageContainer = set(requestUrl,
                     getImageListener(getResources(), imageView, placeHolder, mFadeInImage),
-                    maxWidth, maxHeight, imageView.getScaleType(), bitmap);
+                    maxWidth, maxHeight, bitmap);
             // Store request in ImageView tag
             imageView.setTag(imageContainer);
-        } else {
-        	if(!(imageView instanceof PhotoView)){
-        		imageView.setImageDrawable(placeHolder);
-        	}
+        }
+        else
+        {
+            if (!(imageView instanceof PhotoView))
+            {
+                imageView.setImageDrawable(placeHolder);
+            }
             imageView.setTag(null);
         }
 
         return imageContainer;
     }
-    
 
-    public static ImageListener getImageListener(final Resources resources,
-            final ImageView imageView, final Drawable placeHolder, final boolean fadeInImage) {
-        return new ImageListener() {
+
+    private static ImageListener getImageListener(final Resources resources,
+                                                  final ImageView imageView, final Drawable placeHolder, final boolean fadeInImage)
+    {
+        return new ImageListener()
+        {
             @Override
-            public void onResponse(ImageContainer response, boolean isImmediate) {
+            public void onResponse(ImageContainer response, boolean isImmediate, boolean isFinal)
+            {
                 imageView.setTag(null);
-                if (response.getBitmap() != null) {
-                	
-                	if(imageView instanceof PhotoView){
+                if (response.getBitmap() != null)
+                {
+
+                    if (imageView instanceof PhotoView)
+                    {
                         setPhotoImageBitmap((PhotoView) imageView, response.getBitmap(), resources,
-                                fadeInImage && !isImmediate);		
-                	}
-                	else{
+                                fadeInImage && !isImmediate);
+                    }
+                    else
+                    {
                         setImageBitmap(imageView, response.getBitmap(), resources,
-                                fadeInImage && !isImmediate);	
-                	}
-                } else {
-                	if(!(imageView instanceof PhotoView)){
-                		imageView.setImageDrawable(placeHolder);
-                	}
+                                fadeInImage && !isImmediate);
+                    }
+                }
+                else
+                {
+                    if (!(imageView instanceof PhotoView))
+                    {
+                        imageView.setImageDrawable(placeHolder);
+                    }
                 }
             }
 
             @Override
-            public void onErrorResponse(VolleyError volleyError) {
+            public void onErrorResponse(VolleyError volleyError)
+            {
             }
         };
     }
 
-    private static RequestQueue newRequestQueue(Context context, ImageCacheParams imageCacheParams) {
+    private static RequestQueue newRequestQueue(Context context, ImageCacheParams imageCacheParams)
+    {
 
         Network network = new BasicNetwork(
                 Utils.hasHoneycomb() ?
@@ -373,12 +436,14 @@ public class SimpleImageLoader extends ImageLoader {
                         new HttpClientStack(AndroidHttpClient.newInstance(
                                 NetUtils.getUserAgent(context))));
 
-        Cache cache; 
-        if(null != imageCacheParams){
-            cache = new DiskLruBasedCache(imageCacheParams);	
+        Cache cache;
+        if (null != imageCacheParams)
+        {
+            cache = new DiskLruBasedCache(imageCacheParams);
         }
-        else{
-        	cache = new DiskLruBasedCache(Utils.getDiskCacheDir(context, CACHE_DIR));
+        else
+        {
+            cache = new DiskLruBasedCache(Utils.getDiskCacheDir(context, CACHE_DIR));
         }
         RequestQueue queue = new RequestQueue(cache, network);
         queue.start();
@@ -392,11 +457,13 @@ public class SimpleImageLoader extends ImageLoader {
      * Drawable.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
-    private static void setImageBitmap(final ImageView imageView, final Bitmap bitmap,
-            Resources resources, boolean fadeIn) {
+    private static void setImageBitmap(final ImageView imageView, final BitmapDrawable bitmapDrawable,
+                                       Resources resources, boolean fadeIn)
+    {
 
         // If we're fading in and on HC MR1+
-        if (fadeIn && Utils.hasHoneycombMR1()) {
+        if (fadeIn && Utils.hasHoneycombMR1())
+        {
             // Use ViewPropertyAnimator to run a simple fade in + fade out animation to update the
             // ImageView
             imageView.animate()
@@ -404,10 +471,12 @@ public class SimpleImageLoader extends ImageLoader {
                     .scaleX(0.95f)
                     .alpha(0f)
                     .setDuration(imageView.getDrawable() == null ? 0 : HALF_FADE_IN_TIME)
-                    .setListener(new AnimatorListenerAdapter() {
+                    .setListener(new AnimatorListenerAdapter()
+                    {
                         @Override
-                        public void onAnimationEnd(Animator animation) {
-                            imageView.setImageBitmap(bitmap);
+                        public void onAnimationEnd(Animator animation)
+                        {
+                            imageView.setImageDrawable(bitmapDrawable);
                             imageView.animate()
                                     .alpha(1f)
                                     .scaleY(1f)
@@ -416,29 +485,35 @@ public class SimpleImageLoader extends ImageLoader {
                                     .setListener(null);
                         }
                     });
-        } else if (fadeIn) {
+        }
+        else if (fadeIn)
+        {
             // Otherwise use a TransitionDrawable to fade in
             Drawable initialDrawable;
-            if (imageView.getDrawable() != null) {
+            if (imageView.getDrawable() != null)
+            {
                 initialDrawable = imageView.getDrawable();
-            } else {
+            }
+            else
+            {
                 initialDrawable = transparentDrawable;
             }
-            BitmapDrawable bitmapDrawable = new BitmapDrawable(resources, bitmap);
             // Use TransitionDrawable to fade in
             final TransitionDrawable td =
-                    new TransitionDrawable(new Drawable[] {
+                    new TransitionDrawable(new Drawable[]{
                             initialDrawable,
                             bitmapDrawable
                     });
             imageView.setImageDrawable(td);
             td.startTransition(Utils.ANIMATION_FADE_IN_TIME);
-        } else {
+        }
+        else
+        {
             // No fade in, just set bitmap directly
-            imageView.setImageBitmap(bitmap);
+            imageView.setImageDrawable(bitmapDrawable);
         }
     }
-    
+
     /**
      * Sets a {@link android.graphics.Bitmap} to an {@link android.widget.ImageView} using a
      * fade-in animation. If there is a {@link android.graphics.drawable.Drawable} already set on
@@ -446,10 +521,12 @@ public class SimpleImageLoader extends ImageLoader {
      * Drawable.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
-    private static void setPhotoImageBitmap(final PhotoView imageView, final Bitmap bitmap,
-            Resources resources, boolean fadeIn) {
+    private static void setPhotoImageBitmap(final PhotoView imageView, final BitmapDrawable bitmapDrawable,
+                                            Resources resources, boolean fadeIn)
+    {
         // If we're fading in and on HC MR1+
-        if (fadeIn && Utils.hasHoneycombMR1()) {
+        if (fadeIn && Utils.hasHoneycombMR1())
+        {
             // Use ViewPropertyAnimator to run a simple fade in + fade out animation to update the
             // ImageView
             imageView.animate()
@@ -457,10 +534,12 @@ public class SimpleImageLoader extends ImageLoader {
                     .scaleX(0.95f)
                     .alpha(0f)
                     .setDuration(imageView.getDrawable() == null ? 0 : HALF_FADE_IN_TIME)
-                    .setListener(new AnimatorListenerAdapter() {
+                    .setListener(new AnimatorListenerAdapter()
+                    {
                         @Override
-                        public void onAnimationEnd(Animator animation) {
-                            imageView.bindPhoto(bitmap);
+                        public void onAnimationEnd(Animator animation)
+                        {
+                            imageView.bindDrawable(bitmapDrawable);
                             imageView.animate()
                                     .alpha(1f)
                                     .scaleY(1f)
@@ -469,33 +548,40 @@ public class SimpleImageLoader extends ImageLoader {
                                     .setListener(null);
                         }
                     });
-        } else if (fadeIn) {
+        }
+        else if (fadeIn)
+        {
             // Otherwise use a TransitionDrawable to fade in
             Drawable initialDrawable;
-            if (imageView.getDrawable() != null) {
+            if (imageView.getDrawable() != null)
+            {
                 initialDrawable = imageView.getDrawable();
-            } else {
+            }
+            else
+            {
                 initialDrawable = transparentDrawable;
             }
-            BitmapDrawable bitmapDrawable = new BitmapDrawable(resources, bitmap);
             // Use TransitionDrawable to fade in
             final TransitionDrawable td =
-                    new TransitionDrawable(new Drawable[] {
+                    new TransitionDrawable(new Drawable[]{
                             initialDrawable,
                             bitmapDrawable
                     });
             imageView.bindDrawable(td);
             td.startTransition(Utils.ANIMATION_FADE_IN_TIME);
-        } else {
+        }
+        else
+        {
             // No fade in, just set bitmap directly
-            imageView.bindPhoto(bitmap);
+            imageView.bindDrawable(bitmapDrawable);
         }
     }
 
     /**
      * Interface an activity can implement to provide an ImageLoader to its children fragments.
      */
-    public interface ImageLoaderProvider {
+    public interface ImageLoaderProvider
+    {
         public SimpleImageLoader getImageLoaderInstance();
     }
 }

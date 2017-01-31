@@ -48,7 +48,7 @@ public class ExampleImageLoading extends ActionBarActivity {
           public void onClick(View v) {
              ImageLoader imageLoader = MyVolley.getImageLoader();
              imageLoader.get("https://lh3.googleusercontent.com/-LMUs793rAL4/SUQczGj6CBI/AAAAAAAAJqs/NLBzZMDMhS4/s720/P7300049aasd.JPG", 
-                            ImageLoader.getImageListener(mImageView, 
+                            ImageLoader.getImageListener(mImageView,
                                                           R.drawable.empty_photo, 
                                                           R.drawable.error_image));
           }

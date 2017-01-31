@@ -16,8 +16,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-group = 'com.pedja1'
-version = '1.0.1'
+group = 'org.skynetsoftware'
+version = '1.0.2'
 
 dependencies {
     compile 'com.android.support:support-v4:25.1.0'

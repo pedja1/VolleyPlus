@@ -16,8 +16,6 @@
 
 package com.volley.demo.util;
 
-import java.util.List;
-
 import android.content.Context;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -27,9 +25,10 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.android.volley.cache.SimpleImageLoader;
-import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.ui.NetworkImageView;
 import com.volley.demo.R;
+
+import java.util.List;
 
 public class ImageArrayAdapter extends ArrayAdapter<ImageEntry> {
 	private SimpleImageLoader mImageLoader;

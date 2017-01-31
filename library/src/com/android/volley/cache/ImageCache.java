@@ -1,4 +1,4 @@
-package com.android.volley.cache.plus;
+package com.android.volley.cache;
 
 import android.graphics.drawable.BitmapDrawable;
 
